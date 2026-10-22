@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "diploidgraph"
+version = "0.1.0"
+description = "Compact diploid sequence graphs from two-terminal DAG sequence graphs"
+authors = [{ name = "Nafiseh Jafarzadeh" }]
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+[project.scripts]
+diploidgraph = "diploidgraph.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

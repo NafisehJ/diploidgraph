@@ -1,0 +1,8 @@
+Metadata-Version: 2.4
+Name: diploidgraph
+Version: 0.1.0
+Summary: Compact diploid sequence graphs from two-terminal DAG sequence graphs
+Author: Nafiseh Jafarzadeh
+Requires-Python: >=3.10
+Provides-Extra: test
+Requires-Dist: pytest>=7; extra == "test"

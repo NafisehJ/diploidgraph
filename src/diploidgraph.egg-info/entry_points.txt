@@ -1,0 +1,2 @@
+[console_scripts]
+diploidgraph = diploidgraph.cli:main
