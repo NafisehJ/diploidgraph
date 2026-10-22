@@ -13,8 +13,8 @@ digraph GD {
   n9 [label="(a(b|c)d, -)", shape=box, fillcolor="#f9c784"];
   n0 -> n8;
   n0 -> n9;
-  n0 -> n5;
   n0 -> n1;
+  n0 -> n5;
   n1 -> n6;
   n1 -> n7;
   n1 -> n2;
