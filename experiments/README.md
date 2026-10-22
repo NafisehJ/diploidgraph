@@ -42,3 +42,18 @@ stage (read, decompose, build), peak memory, `|V(G_D)|`, `|E(G_D)|`,
 new vertices by kind (P-node pairs, core forks, pair states, steps), the size of
 the non-series-parallel core, the naive baselines (all graph paths, and observed
 haplotypes), and `pair_coverage` (must be 1.0: every haplotype pair represented).
+
+## 3. Which new vertices are used by observed haplotype pairs
+
+A new vertex of the diploid graph is *supported* if the walk of some ordered
+pair of distinct observed haplotypes (full source-to-sink walks in the GFA)
+passes through it; the others stand for pairs that arise only by recombination.
+Reported per vertex kind (P-node pairs, core forks, pair states, steps).
+
+```bash
+python experiments/observed_support.py BRCA1.gfa --json brca1_support.json
+python experiments/observed_support.py MHC.gfa --json mhc_support.json
+```
+
+The method never builds the diploid graph; it is checked against a brute-force
+enumeration in `tests/test_support.py`.
