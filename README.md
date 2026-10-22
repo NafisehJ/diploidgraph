@@ -128,6 +128,8 @@ not move); grey diamonds are pair states `[hap 1 | hap 2]`.
 
 ## Results on real pangenome loci
 
+<img src="experiments/figures/real_loci.png" width="100%">
+
 HPRC v2.0 Minigraph-Cactus subgraphs (GRCh38-based, `ec1M`). Both inputs are
 two-terminal DAGs with no preprocessing. Measured on a laptop (WSL Ubuntu 22.04,
 aarch64, 8 GB RAM), single run.
