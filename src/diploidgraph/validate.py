@@ -38,7 +38,14 @@ def _topo(gd: DiploidGraph) -> List:
     return order
 
 
-def weighted_walk_count(gd: DiploidGraph) -> int:
+def weighted_walk_count(gd: DiploidGraph, modulus: int | None = None) -> int:
+    """Sum over all walks of the number of pairs each walk decodes to.
+
+    With `modulus`, the count is computed modulo that number. Path counts on
+    locus-level graphs have tens of thousands of digits, so the exact count
+    would hold a huge integer per vertex; comparing residues modulo large
+    primes keeps memory linear.
+    """
     ways = {v: 0 for v in gd.succ}
     ways[gd.source] = 1
     for u in _topo(gd):
@@ -47,9 +54,33 @@ def weighted_walk_count(gd: DiploidGraph) -> int:
             continue
         if u in gd.gadget:
             w_u *= gd.gadget[u].weight
+        if modulus:
+            w_u %= modulus
         for v in gd.succ[u]:
-            ways[v] += w_u
+            ways[v] = (ways[v] + w_u) % modulus if modulus else ways[v] + w_u
     return ways[gd.sink]
+
+
+PRIMES = (2**61 - 1, 2**89 - 1)
+
+
+def exactness_check(g: SequenceGraph, gd: DiploidGraph, n_paths: int | None = None,
+                    exact_limit_bits: int = 8000) -> Dict[str, object]:
+    """Check weighted walk count == N^2 (N = number of source-sink paths of G).
+
+    Exact when N is small; otherwise modulo two Mersenne primes, which keeps one
+    machine-size number per vertex instead of a number with tens of thousands of
+    digits. Pass n_paths (e.g. the decomposition root's count) to avoid
+    recounting paths.
+    """
+    if n_paths is None:
+        s, t = g.terminals()
+        n_paths = g.count_paths(s, t)
+    n = n_paths
+    if n.bit_length() <= exact_limit_bits:
+        return {"method": "exact", "passed": weighted_walk_count(gd) == n * n}
+    ok = all(weighted_walk_count(gd, p) == (n % p) * (n % p) % p for p in PRIMES)
+    return {"method": "modulo 2^61-1 and 2^89-1", "passed": ok}
 
 
 def coverage(g: SequenceGraph, gd: DiploidGraph) -> Tuple[int, int]:

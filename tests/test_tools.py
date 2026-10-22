@@ -34,7 +34,7 @@ def test_gfa_reader(tmp_path):
 def test_stats_and_log10():
     assert abs(log10_int(10**300) - 300) < 1e-9
     r = run_stats(random_sp_dag(50, seed=3))
-    assert r["pair_coverage"] == 1.0
+    assert r["exactness_passed"] is True
     assert r["diploid_vertices"] == r["n_vertices"] + r["diploid_new_vertices"]
 
 
@@ -65,3 +65,22 @@ def test_sizes_do_not_depend_on_hash_seed(tmp_path):
         r = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True, check=True)
         outs.add(r.stdout.strip())
     assert len(outs) == 1, outs
+
+
+def test_modular_check_agrees_and_detects_errors():
+    from diploidgraph import build_diploid
+    from diploidgraph.generators import random_dag
+    from diploidgraph.validate import PRIMES, exactness_check, weighted_walk_count
+    g = random_dag(n_ops=600, extra_edges=20, seed=2)
+    gd, _ = build_diploid(g)
+    exact = weighted_walk_count(gd)
+    for p in PRIMES:
+        assert weighted_walk_count(gd, p) == exact % p
+    assert exactness_check(g, gd, exact_limit_bits=0)["passed"]
+    # remove one heterozygous vertex: both checks must fail
+    h = next(v for v in gd.succ if v[0] == "het")
+    for outs in gd.succ.values():
+        outs.discard(h)
+    del gd.succ[h]
+    assert not exactness_check(g, gd)["passed"]
+    assert not exactness_check(g, gd, exact_limit_bits=0)["passed"]

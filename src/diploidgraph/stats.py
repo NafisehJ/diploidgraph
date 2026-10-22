@@ -12,7 +12,7 @@ from .decompose import decompose
 from .diploid import build_diploid, diploid_size, naive_pair_count
 from .gfa import read_gfa
 from .seqgraph import SequenceGraph
-from .validate import coverage
+from .validate import exactness_check
 
 
 def log10_int(x: int) -> float:
@@ -72,10 +72,12 @@ def run_stats(g: SequenceGraph, n_observed: Optional[int] = None, count_only: bo
         log10_naive_ordered_all_paths=log10_int(naive_pair_count(n_paths, ordered=True)),
     )
     if gd is not None:
-        represented, total = coverage(g, gd)
-        out["pair_coverage"] = represented / total if total else None
+        check = exactness_check(g, gd, n_paths=n_paths)
+        out["exactness_check"] = check["method"]
+        out["exactness_passed"] = check["passed"]
     else:
-        out["pair_coverage"] = None
+        out["exactness_check"] = None
+        out["exactness_passed"] = None
     if n_observed is not None:
         out["naive_ordered_observed"] = naive_pair_count(n_observed, ordered=True)
     return out
