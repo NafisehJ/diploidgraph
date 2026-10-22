@@ -22,7 +22,7 @@ def log10_int(x: int) -> float:
     return math.log10(x >> k) + k * math.log10(2)
 
 
-def run_stats(g: SequenceGraph, allow_partial: bool = False, n_observed: Optional[int] = None) -> Dict[str, object]:
+def run_stats(g: SequenceGraph, n_observed: Optional[int] = None) -> Dict[str, object]:
     out: Dict[str, object] = {"n_vertices": g.num_vertices(), "n_edges": g.num_edges()}
     s, t = g.terminals()
 
@@ -30,7 +30,7 @@ def run_stats(g: SequenceGraph, allow_partial: bool = False, n_observed: Optiona
     t0 = time.perf_counter()
     dec = decompose(g)
     t1 = time.perf_counter()
-    gd, _ = build_diploid(g, dec, allow_partial=allow_partial)
+    gd, _ = build_diploid(g, dec)
     t2 = time.perf_counter()
     peak = tracemalloc.get_traced_memory()[1]
     tracemalloc.stop()
@@ -42,13 +42,16 @@ def run_stats(g: SequenceGraph, allow_partial: bool = False, n_observed: Optiona
         is_series_parallel=dec.is_series_parallel,
         n_pnodes=len(pnodes),
         max_pnode_branches=max((len(p.children) for p in pnodes), default=0),
-        n_rnodes=len(dec.nodes("R")),
+        core_vertices=len({c.source for r in dec.nodes("R") for c in r.children}
+                          | {c.sink for r in dec.nodes("R") for c in r.children}),
+        core_edges=sum(len(r.children) for r in dec.nodes("R")),
         time_decompose_s=t1 - t0,
         time_build_s=t2 - t1,
         peak_python_memory_bytes=peak,
         diploid_vertices=gd.num_vertices(),
         diploid_edges=gd.num_edges(),
-        diploid_het_vertices=gd.num_het_vertices(),
+        diploid_new_vertices=gd.num_het_vertices(),
+        **{f"diploid_kind_{k}": gd.count_by_kind().get(k, 0) for k in ("hom", "het", "fork", "pair", "step")},
         log10_st_paths=log10_int(n_paths),
         log10_naive_ordered_all_paths=log10_int(naive_pair_count(n_paths, ordered=True)),
         pair_coverage=represented / total if total else None,
@@ -58,7 +61,7 @@ def run_stats(g: SequenceGraph, allow_partial: bool = False, n_observed: Optiona
     return out
 
 
-def gfa_stats(path: str, allow_partial: bool = False) -> Dict[str, object]:
+def gfa_stats(path: str) -> Dict[str, object]:
     t0 = time.perf_counter()
     data = read_gfa(path)
     t_read = time.perf_counter() - t0
@@ -71,5 +74,5 @@ def gfa_stats(path: str, allow_partial: bool = False) -> Dict[str, object]:
         "n_distinct_haplotype_walks": n_obs,
         "unoriented_haplotypes": data.unoriented_haplotypes,
     }
-    out.update(run_stats(data.graph, allow_partial=allow_partial, n_observed=n_obs))
+    out.update(run_stats(data.graph, n_observed=n_obs))
     return out

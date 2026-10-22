@@ -1,25 +1,48 @@
-"""Diploid sequence graph construction (series-parallel case).
+"""Diploid sequence graph construction.
 
-Vertices of the diploid graph G_D:
+Reading a walk of G_D builds an ordered pair of haplotypes (P, Q). A walk starts
+at ("hom", s) with P = Q = (s,) and is read edge by edge:
 
-* homozygous vertex ("hom", v) for every v in V(G), meaning both haplotypes
-  pass through v;
-* heterozygous vertex ("het", p, i, j) for every P-node p with terminals
-  (x, y) and every ordered pair of distinct branches i != j of p, meaning
-  haplotype 1 goes from x to y through branch i and haplotype 2 through
-  branch j (any path inside each branch).
+* an edge ("hom", u) -> ("hom", v) appends v to both P and Q;
+* entering a *gadget* vertex appends its segments: segment 1 to P and segment 2
+  to Q. A segment (x, y, B) means "any x-y path inside the two-terminal
+  subgraph B", appended without x and with y. A missing segment appends nothing;
+* all other edges append nothing.
 
-Edges: ("hom", u) -> ("hom", v) for every (u, v) in E(G), and
-("hom", x) -> ("het", p, i, j) -> ("hom", y) for every heterozygous vertex.
+Vertices of G_D:
 
-A P-node with k branches therefore adds k(k-1) vertices and 2k(k-1) edges, so
-|V(G_D)| = |V| + sum_p k_p(k_p - 1) and |E(G_D)| = |E| + 2 sum_p k_p(k_p - 1).
+* ("hom", v): both haplotypes are at v (one per vertex of G).
+* ("het", p, i, j): P-node p with terminals (x, y), ordered pair of distinct
+  branches i != j. Gadget with segments (x, y, B_i) and (x, y, B_j), placed
+  between ("hom", x) and ("hom", y).
+
+Series-parallel inputs need nothing else. If the input is not series-parallel,
+the decomposition leaves an irreducible core: a DAG whose edges ("core edges")
+each stand for a series-parallel subgraph, and whose distinct core edges are
+internally vertex-disjoint. Two haplotypes that leave a core vertex x along
+different core edges cannot meet again except at a core vertex. The core part
+of G_D tracks such a divergence with a pair state:
+
+* ("fork", c1, c2): at core vertex x, haplotype 1 leaves along core edge c1
+  and haplotype 2 along c2 != c1. Gadget with segments (x, head(c1), c1) and
+  (x, head(c2), c2).
+* ("pair", u, v): haplotypes are at distinct core vertices u (hap 1), v (hap 2)
+  and have not met since they diverged. Appends nothing.
+* ("step", h, c, w): haplotype h moves along core edge c while the other waits
+  at w. Gadget with one segment. Only the haplotype at the earlier vertex in a
+  fixed topological order moves, which makes the walk of every pair unique and
+  guarantees that the two haplotypes cannot share a vertex before they meet.
+  When both reach the same core vertex z the walk returns to ("hom", z).
+
+Only pair states reachable from a fork are created, so the core part has at
+most n_c(n_c - 1) pair states for a core with n_c vertices.
 """
 
 from __future__ import annotations
 
+from collections import deque
 from dataclasses import dataclass, field
-from typing import Dict, Hashable, List, Set, Tuple
+from typing import Dict, Hashable, List, Optional, Set, Tuple
 
 from .decompose import DecompNode, Decomposition, decompose
 from .seqgraph import SequenceGraph, Vertex
@@ -27,15 +50,26 @@ from .seqgraph import SequenceGraph, Vertex
 DVertex = Tuple[Hashable, ...]
 
 
-class NonSeriesParallelError(NotImplementedError):
-    """The input has an R-node; the W-motif extension is not implemented yet."""
+@dataclass(frozen=True)
+class Segment:
+    source: Vertex
+    sink: Vertex
+    node: DecompNode  # two-terminal subgraph the path runs inside
 
 
 @dataclass
-class HetInfo:
-    pnode: DecompNode
-    branch1: DecompNode
-    branch2: DecompNode
+class Gadget:
+    seg1: Optional[Segment]  # appended to haplotype 1
+    seg2: Optional[Segment]  # appended to haplotype 2
+
+    @property
+    def weight(self) -> int:
+        """Number of haplotype pairs this vertex stands for."""
+        w = 1
+        for s in (self.seg1, self.seg2):
+            if s is not None:
+                w *= s.node.n_paths
+        return w
 
 
 @dataclass
@@ -43,7 +77,10 @@ class DiploidGraph:
     source: DVertex
     sink: DVertex
     succ: Dict[DVertex, Set[DVertex]] = field(default_factory=dict)
-    het: Dict[DVertex, HetInfo] = field(default_factory=dict)
+    gadget: Dict[DVertex, Gadget] = field(default_factory=dict)
+
+    def add_vertex(self, a: DVertex) -> None:
+        self.succ.setdefault(a, set())
 
     def add_edge(self, a: DVertex, b: DVertex) -> None:
         self.succ.setdefault(a, set()).add(b)
@@ -55,39 +92,86 @@ class DiploidGraph:
     def num_edges(self) -> int:
         return sum(len(o) for o in self.succ.values())
 
+    def count_by_kind(self) -> Dict[str, int]:
+        out: Dict[str, int] = {}
+        for v in self.succ:
+            out[v[0]] = out.get(v[0], 0) + 1
+        return out
+
     def num_het_vertices(self) -> int:
-        return len(self.het)
+        """All vertices other than the homozygous copy of G."""
+        return len(self.succ) - self.count_by_kind().get("hom", 0)
 
 
-def build_diploid(g: SequenceGraph, dec: Decomposition | None = None, allow_partial: bool = False) -> Tuple[DiploidGraph, Decomposition]:
-    """Build G_D from a two-terminal DAG.
-
-    If the graph is not series-parallel, raises NonSeriesParallelError unless
-    allow_partial=True, in which case R-node regions are copied homozygously
-    only (pairs that diverge inside them are NOT represented; use
-    validate.coverage() to measure what fraction of pairs is represented).
-    """
+def build_diploid(g: SequenceGraph, dec: Decomposition | None = None) -> Tuple[DiploidGraph, Decomposition]:
     dec = dec or decompose(g)
-    if not dec.is_series_parallel and not allow_partial:
-        raise NonSeriesParallelError("non-series-parallel input: W-motif extension not implemented yet")
-
     gd = DiploidGraph(source=("hom", dec.source), sink=("hom", dec.sink))
+
+    # Homozygous copy of G.
     for v in g.vertices:
-        gd.succ.setdefault(("hom", v), set())
+        gd.add_vertex(("hom", v))
     for u, v in g.edges():
         gd.add_edge(("hom", u), ("hom", v))
 
+    # P-nodes.
     for p in dec.nodes("P"):
-        x, y = ("hom", p.source), ("hom", p.sink)
+        x, y = p.source, p.sink
         for i, b1 in enumerate(p.children):
             for j, b2 in enumerate(p.children):
-                if i == j:
-                    continue
-                h = ("het", p.uid, i, j)
-                gd.add_edge(x, h)
-                gd.add_edge(h, y)
-                gd.het[h] = HetInfo(p, b1, b2)
+                if i != j:
+                    h = ("het", p.uid, i, j)
+                    gd.add_edge(("hom", x), h)
+                    gd.add_edge(h, ("hom", y))
+                    gd.gadget[h] = Gadget(Segment(x, y, b1), Segment(x, y, b2))
+
+    # Irreducible core (non-series-parallel inputs only).
+    for r in dec.nodes("R"):
+        _add_core(gd, r, {v: i for i, v in enumerate(g.topological_order())})
     return gd, dec
+
+
+def _add_core(gd: DiploidGraph, r: DecompNode, rank: Dict[Vertex, int]) -> None:
+    out_core: Dict[Vertex, List[DecompNode]] = {}
+    for c in r.children:
+        out_core.setdefault(c.source, []).append(c)
+        out_core.setdefault(c.sink, [])
+    for u, cs in out_core.items():
+        heads = [c.sink for c in cs]
+        assert len(heads) == len(set(heads)), "core has parallel edges"
+
+    def state(a: Vertex, b: Vertex) -> DVertex:
+        return ("hom", a) if a == b else ("pair", a, b)
+
+    queue: deque = deque()
+
+    def link(frm: DVertex, to: DVertex) -> None:
+        if to[0] == "pair" and to not in gd.succ:
+            queue.append(to)
+        gd.add_edge(frm, to)
+
+    for x, cs in out_core.items():
+        for c1 in cs:
+            for c2 in cs:
+                if c1 is c2:
+                    continue
+                f = ("fork", c1.uid, c2.uid)
+                gd.gadget[f] = Gadget(Segment(x, c1.sink, c1), Segment(x, c2.sink, c2))
+                gd.add_edge(("hom", x), f)
+                link(f, state(c1.sink, c2.sink))
+
+    while queue:
+        st = queue.popleft()
+        _, u, v = st
+        if rank[u] < rank[v]:
+            h, lag, other = 1, u, v
+        else:
+            h, lag, other = 2, v, u
+        for c in out_core[lag]:
+            step = ("step", h, c.uid, other)
+            seg = Segment(lag, c.sink, c)
+            gd.gadget[step] = Gadget(seg, None) if h == 1 else Gadget(None, seg)
+            gd.add_edge(st, step)
+            link(step, state(c.sink, other) if h == 1 else state(other, c.sink))
 
 
 def naive_pair_count(n_haplotypes: int, ordered: bool = False) -> int:

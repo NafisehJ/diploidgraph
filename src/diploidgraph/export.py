@@ -10,6 +10,8 @@ from .seqgraph import SequenceGraph
 
 HOM_COLOR = "#cfe3f7"
 HET_COLOR = "#f9c784"
+CORE_COLOR = "#b9e4c9"
+PAIR_COLOR = "#e3e3e3"
 
 
 def _q(x) -> str:
@@ -47,18 +49,32 @@ def sequence_graph_dot(g: SequenceGraph, name: str = "G") -> str:
     return "\n".join(lines)
 
 
+def _seg_label(seg, with_sink: bool) -> str:
+    if seg is None:
+        return "\u00b7"  # middle dot: this haplotype does not move
+    inner = _expr(seg.node)
+    return (inner + str(seg.sink)) if with_sink else (inner or "-")
+
+
 def diploid_graph_dot(gd: DiploidGraph, name: str = "GD") -> str:
+    """Blue ellipses: homozygous copy (v,v). Orange boxes: P-node pairs of branches.
+    Green boxes: core forks and steps (segments end at the named vertex).
+    Grey diamonds: core pair states [hap1 vertex | hap2 vertex]."""
     lines = [f"digraph {name} {{", "  rankdir=LR;", "  node [style=filled];"]
     ids: Dict = {}
     for k, v in enumerate(gd.succ):
         ids[v] = f"n{k}"
-        if v in gd.het:
-            h = gd.het[v]
-            label = f"({branch_label(h.branch1)}, {branch_label(h.branch2)})"
-            lines.append(f'  n{k} [label={_q(label)}, shape=box, fillcolor="{HET_COLOR}"];')
+        kind = v[0]
+        if kind == "hom":
+            label, shape, color = f"({v[1]},{v[1]})", "ellipse", HOM_COLOR
+        elif kind == "pair":
+            label, shape, color = f"[{v[1]} | {v[2]}]", "diamond", PAIR_COLOR
         else:
-            label = f"({v[1]},{v[1]})"
-            lines.append(f'  n{k} [label={_q(label)}, shape=ellipse, fillcolor="{HOM_COLOR}"];')
+            gad = gd.gadget[v]
+            ws = kind != "het"
+            label = f"({_seg_label(gad.seg1, ws)}, {_seg_label(gad.seg2, ws)})"
+            shape, color = "box", (HET_COLOR if kind == "het" else CORE_COLOR)
+        lines.append(f'  n{k} [label={_q(label)}, shape={shape}, fillcolor="{color}"];')
     for a, outs in gd.succ.items():
         for b in outs:
             lines.append(f"  {ids[a]} -> {ids[b]};")

@@ -30,6 +30,30 @@ def random_sp_dag(n_ops: int, p_series: float = 0.3, max_branches: int = 3, seed
     return SequenceGraph.from_edges(edges)
 
 
+def random_dag(n_ops: int, extra_edges: int, max_branches: int = 3, seed: int | None = None) -> SequenceGraph:
+    """Random two-terminal DAG, usually not series-parallel.
+
+    A random SP DAG plus `extra_edges` random forward edges (u before v in a
+    topological order, u != sink, v != source), which keeps one source and one
+    sink and creates W-motifs.
+    """
+    rng = random.Random(seed)
+    g = random_sp_dag(n_ops, max_branches=max_branches, seed=rng.randrange(1 << 30))
+    s, t = g.terminals()
+    order = g.topological_order()
+    added = 0
+    for _ in range(50 * extra_edges + 50):
+        if added == extra_edges:
+            break
+        i, j = sorted(rng.sample(range(len(order)), 2))
+        u, v = order[i], order[j]
+        if u == t or v == s or v in g.succ[u]:
+            continue
+        g.add_edge(u, v)
+        added += 1
+    return g
+
+
 def w_graph() -> SequenceGraph:
     """The smallest non-SP two-terminal DAG (the W / Wheatstone-bridge pattern).
 

@@ -10,10 +10,9 @@ carries a tree node describing the subgraph it stands for:
 * P-node: a parallel composition of k >= 2 *branches* between the same pair of
   terminals. Branches are S- or Q-nodes (nested P-nodes are flattened), so the
   terminals of every P-node are distinct.
-* R-node: what remains when no reduction applies. For an SP graph there is no
-  R-node. For a non-SP graph we currently return a single R-node whose children
-  are the irreducible core edges; splitting it into the proper R-components of
-  the SPQR-tree is the next step [TODO: non-SP case].
+* R-node: what remains when no reduction applies (the irreducible core). For
+  an SP graph there is none. For a non-SP graph the root is a single R-node
+  whose children are the core edges, each standing for an SP subgraph.
 
 For a two-terminal DAG, a P-node produced here is a maximal set of >= 2
 internally disjoint two-terminal subgraphs sharing terminals (x, y); these are
@@ -30,7 +29,7 @@ from typing import Dict, List, Optional, Set, Tuple
 from .seqgraph import Edge, SequenceGraph, Vertex
 
 
-@dataclass
+@dataclass(eq=False)  # identity equality and hashing
 class DecompNode:
     kind: str  # "Q", "S", "P" or "R"
     source: Vertex

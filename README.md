@@ -10,8 +10,9 @@ construction creates one object per pair of haplotypes, which grows
 quadratically in the number of haplotypes and exponentially in the number of
 variant sites. This package keeps homozygous regions as a single copy of the
 input graph and adds new vertices only where the two haplotypes can differ: at
-the terminals of parallel structures (P-nodes) found by a series-parallel /
-SPQR-tree decomposition.
+the terminals of parallel structures (P-nodes) found by a series-parallel
+decomposition, and, for graphs that are not series-parallel, inside the small
+irreducible core that contains their W-motifs.
 
 Paper: N. Jafarzadeh, J. M. Eizenga, B. Paten. *An Efficient Graph Algorithm for
 Diploid Local Ancestry Inference.* bioRxiv 2025.
@@ -24,7 +25,7 @@ Diploid Local Ancestry Inference.* bioRxiv 2025.
 | Input checks (two-terminal DAG), GFA reader (S, L, P, W lines) | done |
 | Series-parallel decomposition (linear-time series/parallel reductions) | done |
 | Diploid construction, series-parallel graphs | done, verified exact |
-| Non-series-parallel graphs (R-nodes, W-motifs, complexity graph C(G)) | in progress |
+| Diploid construction, non-series-parallel graphs (core pair states) | done, verified exact |
 | Experiments: synthetic scaling, real pangenome loci | scripts ready |
 
 ## Install
@@ -55,10 +56,6 @@ print(gd.num_vertices(), gd.num_het_vertices())   # 6 2
 print(brute_force_check(g, gd)["exact"])           # True
 ```
 
-For an input that is not series-parallel, `build_diploid` raises
-`NonSeriesParallelError`; `--allow-partial` (or `allow_partial=True`) builds the
-series-parallel part only and reports `pair_coverage`, the fraction of haplotype
-pairs represented.
 
 ## The construction
 
@@ -68,9 +65,18 @@ pairs represented.
   branches `B_1, ..., B_k`, one vertex `(B_i, B_j)` for every ordered pair
   `i != j`, with edges `(x, x) -> (B_i, B_j) -> (y, y)`. It means "haplotype 1
   crosses from x to y inside B_i and haplotype 2 inside B_j".
-* **Size.** `|V(G_D)| = |V| + sum_P k_P (k_P - 1)` and
-  `|E(G_D)| = |E| + 2 sum_P k_P (k_P - 1)`: linear in the input for bounded
-  branching, independent of the number of haplotypes.
+* **Non-series-parallel core.** Series and parallel reductions leave an
+  irreducible core: a DAG whose edges each stand for a series-parallel
+  subgraph. Two haplotypes that leave a core vertex along different core edges
+  can meet again only at a core vertex. The core part of `G_D` follows such a
+  divergence with pair states `[u | v]` (haplotype 1 at core vertex `u`,
+  haplotype 2 at `v`), moving the haplotype that is earlier in a fixed
+  topological order one core edge at a time, until both reach the same vertex.
+  This makes the walk of every pair unique.
+* **Size.** For series-parallel inputs, `|V(G_D)| = |V| + sum_P k_P (k_P - 1)`
+  and `|E(G_D)| = |E| + 2 sum_P k_P (k_P - 1)`. A core with `n_c` vertices adds
+  at most `n_c (n_c - 1)` pair states plus forks and steps bounded by core edges
+  times core vertices. Nothing depends on the number of haplotypes.
 
 ## Correctness checks
 
@@ -84,22 +90,23 @@ one walk, and nothing else is decoded.
   (`N` = number of source-to-sink paths) for an exact `G_D`; it is used on large
   graphs where enumeration is impossible.
 
-The test suite checks exactness on random nested series-parallel graphs (brute
-force) and on large ones (weighted count). Tests run on every push (see badge).
+The test suite checks exactness by brute force on 40 random series-parallel
+graphs and 60 random non-series-parallel graphs, and by the weighted count on
+large graphs of both kinds. Tests run on every push (see badge).
 
 ## Examples
 
 `python examples/run_examples.py --png` writes the input graph, the diploid
 graph and a summary table for each example to `examples/out/`.
 
-| Example | |V| | s-t paths N | P-nodes | |V(G_D)| | het vertices | naive N(N-1) | exact |
+| Example | |V| | s-t paths N | P-nodes | |V(G_D)| | new vertices | naive N(N-1) | exact |
 |---|---|---|---|---|---|---|---|
 | One bubble (SNP) | 4 | 2 | 1 | 6 | 2 | 2 | yes |
 | Three alleles | 5 | 3 | 1 | 11 | 6 | 6 | yes |
 | Two bubbles in series | 7 | 4 | 2 | 11 | 4 | 12 | yes |
 | Nested bubble (insertion carrying a SNP) | 6 | 3 | 2 | 10 | 4 | 6 | yes |
 | Random nested SP graph | 18 | 7 | 4 | 34 | 16 | 42 | yes |
-| W-motif (non-SP) | 7 | 6 | 1 | - | - | 30 | pending |
+| Bubble followed by a W-motif (non-SP) | 7 | 6 | 1 | 23 | 16 | 30 | yes |
 
 Nested bubble: input (left) and diploid graph (right). Blue vertices are
 homozygous; orange vertices are heterozygous pairs of branches, written with
@@ -108,6 +115,15 @@ nested alternatives as `(x|y)`.
 <p>
 <img src="examples/out/04_nested_input.png" height="160">
 <img src="examples/out/04_nested_diploid.png" height="220">
+</p>
+
+Bubble followed by a W-motif (diagonal `c -> d`): input (top) and diploid graph
+(bottom). Green boxes move one or both haplotypes along a core edge (`·` = does
+not move); grey diamonds are pair states `[hap 1 | hap 2]`.
+
+<p>
+<img src="examples/out/06_w_motif_input.png" height="160"><br>
+<img src="examples/out/06_w_motif_diploid.png" width="100%">
 </p>
 
 ## Experiments

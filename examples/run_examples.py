@@ -11,9 +11,9 @@ import pathlib
 import shutil
 import subprocess
 
-from diploidgraph import NonSeriesParallelError, SequenceGraph, build_diploid, decompose, naive_pair_count
+from diploidgraph import SequenceGraph, build_diploid, decompose, naive_pair_count
 from diploidgraph.export import diploid_graph_dot, sequence_graph_dot
-from diploidgraph.generators import random_sp_dag, series_of, w_graph
+from diploidgraph.generators import random_sp_dag
 from diploidgraph.validate import brute_force_check
 
 OUT = pathlib.Path(__file__).parent / "out"
@@ -29,8 +29,9 @@ def examples():
     yield "04_nested", "A bubble nested inside one allele of an outer bubble (an insertion carrying a SNP).", SequenceGraph.from_edges(
         [("s", "a"), ("a", "b"), ("a", "c"), ("b", "d"), ("c", "d"), ("d", "t"), ("s", "t")])
     yield "05_random_sp", "Random nested series-parallel graph (seed 7).", random_sp_dag(n_ops=10, seed=7)
-    yield "06_w_motif", "Smallest non-series-parallel graph (W-motif); detected, extension pending.", series_of(
-        SequenceGraph.from_edges([("s", "a"), ("s", "b"), ("a", "t"), ("b", "t")]), w_graph())
+    yield "06_w_motif", "Smallest non-series-parallel graph (W-motif) in series with a bubble; core handled by pair states.", SequenceGraph.from_edges(
+        [("s", "a"), ("s", "b"), ("a", "m"), ("b", "m"),                  # bubble
+         ("m", "c"), ("m", "d"), ("c", "d"), ("c", "t"), ("d", "t")])     # W-motif: diagonal c -> d
 
 
 def render(dot_path: pathlib.Path) -> None:
@@ -46,20 +47,17 @@ def main() -> None:
     OUT.mkdir(exist_ok=True)
 
     # Het vertices are ordered pairs, so the like-for-like naive count is N(N-1) (ordered).
-    rows = ["| Example | Description | |V| | |E| | s-t paths N | P-nodes | |V(G_D)| | het vertices | naive N(N-1) | exact |",
+    rows = ["| Example | Description | |V| | |E| | s-t paths N | P-nodes | |V(G_D)| | new vertices | naive N(N-1) | exact |",
             "|---|---|---|---|---|---|---|---|---|---|"]
     for name, desc, g in examples():
         s, t = g.terminals()
         n = g.count_paths(s, t)
         dec = decompose(g)
         (OUT / f"{name}_input.dot").write_text(sequence_graph_dot(g))
-        try:
-            gd, _ = build_diploid(g, dec)
-            exact = brute_force_check(g, gd)["exact"]
-            (OUT / f"{name}_diploid.dot").write_text(diploid_graph_dot(gd))
-            row = [gd.num_vertices(), gd.num_het_vertices(), naive_pair_count(n, ordered=True), "yes" if exact else "NO"]
-        except NonSeriesParallelError:
-            row = ["-", "-", naive_pair_count(n, ordered=True), "non-SP: pending"]
+        gd, _ = build_diploid(g, dec)
+        exact = brute_force_check(g, gd)["exact"]
+        (OUT / f"{name}_diploid.dot").write_text(diploid_graph_dot(gd))
+        row = [gd.num_vertices(), gd.num_het_vertices(), naive_pair_count(n, ordered=True), "yes" if exact else "NO"]
         rows.append(f"| {name} | {desc} | {g.num_vertices()} | {g.num_edges()} | {n} | {len(dec.nodes('P'))} | " + " | ".join(map(str, row)) + " |")
         if args.png:
             for f in OUT.glob(f"{name}_*.dot"):

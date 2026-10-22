@@ -1,7 +1,7 @@
 """Diploid sequence graphs from two-terminal DAG sequence graphs."""
 
 from .decompose import DecompNode, Decomposition, decompose
-from .diploid import DiploidGraph, NonSeriesParallelError, build_diploid, naive_pair_count
+from .diploid import DiploidGraph, build_diploid, naive_pair_count
 from .seqgraph import NotTwoTerminalDAG, SequenceGraph
 
 __all__ = [
@@ -11,7 +11,6 @@ __all__ = [
     "Decomposition",
     "decompose",
     "DiploidGraph",
-    "NonSeriesParallelError",
     "build_diploid",
     "naive_pair_count",
 ]

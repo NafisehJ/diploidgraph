@@ -1,20 +1,13 @@
 """Correctness checks for a diploid graph G_D built from G.
 
-Decoding semantics. A walk W in G_D from ("hom", s) to ("hom", t) decodes to
-the set of ordered haplotype pairs (P, Q) obtained by reading W left to right:
-a homozygous step ("hom", u) -> ("hom", v) appends v to both P and Q; a
-heterozygous vertex ("het", p, i, j) between ("hom", x) and ("hom", y)
-appends to P any x-y path inside branch i and to Q any x-y path inside
-branch j.
+Decoding of walks is defined in diploid.py. G_D is *exact* if every ordered
+pair of s-t paths of G is decoded by exactly one walk and every decoded pair is
+a pair of s-t paths of G.
 
-G_D is *exact* if every ordered pair of s-t paths of G is decoded by exactly
-one walk and every decoded pair is a pair of s-t paths of G.
-
-Two checks:
-* brute_force_check: enumerates everything; small graphs only.
-* weighted_walk_count: a linear-time necessary condition for exactness that
-  scales to real graphs. It sums, over all walks, the number of pairs each
-  walk decodes to. For an exact G_D this equals N^2 (N = number of s-t paths).
+* brute_force_check enumerates everything; small graphs only.
+* weighted_walk_count is a linear-time necessary condition for exactness: the
+  number of pairs decoded, summed over all walks. It equals N^2 for an exact
+  G_D (N = number of s-t paths).
 """
 
 from __future__ import annotations
@@ -22,7 +15,7 @@ from __future__ import annotations
 from collections import Counter, deque
 from typing import Dict, List, Tuple
 
-from .diploid import DiploidGraph
+from .diploid import DiploidGraph, Segment
 from .seqgraph import SequenceGraph
 
 
@@ -52,9 +45,8 @@ def weighted_walk_count(gd: DiploidGraph) -> int:
         w_u = ways[u]
         if not w_u:
             continue
-        if u in gd.het:
-            info = gd.het[u]
-            w_u *= info.branch1.n_paths * info.branch2.n_paths
+        if u in gd.gadget:
+            w_u *= gd.gadget[u].weight
         for v in gd.succ[u]:
             ways[v] += w_u
     return ways[gd.sink]
@@ -71,6 +63,14 @@ def brute_force_check(g: SequenceGraph, gd: DiploidGraph) -> Dict[str, object]:
     s, t = g.terminals()
     haps = g.all_paths(s, t)
     expected = Counter((p, q) for p in haps for q in haps)
+    seg_cache: Dict[Segment, List[Tuple]] = {}
+
+    def extensions(seg):
+        if seg is None:
+            return [()]
+        if seg not in seg_cache:
+            seg_cache[seg] = [p[1:] for p in g.all_paths(seg.source, seg.sink, seg.node.edges())]
+        return seg_cache[seg]
 
     decoded: Counter = Counter()
     stack: List[Tuple[object, List[Tuple[Tuple, Tuple]]]] = [(gd.source, [((s,), (s,))])]
@@ -80,17 +80,15 @@ def brute_force_check(g: SequenceGraph, gd: DiploidGraph) -> Dict[str, object]:
             decoded.update(partial)
             continue
         for v in gd.succ[u]:
-            if v in gd.het:
-                info = gd.het[v]
-                x, y = info.pnode.source, info.pnode.sink
-                p_ext = g.all_paths(x, y, info.branch1.edges())
-                q_ext = g.all_paths(x, y, info.branch2.edges())
-                (nxt,) = gd.succ[v]
-                new = [(a + pe[1:], b + qe[1:]) for a, b in partial for pe in p_ext for qe in q_ext]
-                stack.append((nxt, new))
+            if v in gd.gadget:
+                gad = gd.gadget[v]
+                new = [(a + e1, b + e2) for a, b in partial
+                       for e1 in extensions(gad.seg1) for e2 in extensions(gad.seg2)]
+            elif u[0] == "hom" and v[0] == "hom":
+                new = [(a + (v[1],), b + (v[1],)) for a, b in partial]
             else:
-                y = v[1]
-                stack.append((v, [(a + (y,), b + (y,)) for a, b in partial]))
+                new = partial
+            stack.append((v, new))
 
     missing = expected - decoded
     spurious = decoded - expected

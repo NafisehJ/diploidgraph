@@ -33,4 +33,4 @@ def test_stats_and_log10():
     assert abs(log10_int(10**300) - 300) < 1e-9
     r = run_stats(random_sp_dag(50, seed=3))
     assert r["pair_coverage"] == 1.0
-    assert r["diploid_vertices"] == r["n_vertices"] + r["diploid_het_vertices"]
+    assert r["diploid_vertices"] == r["n_vertices"] + r["diploid_new_vertices"]
