@@ -81,18 +81,31 @@ def run_stats(g: SequenceGraph, n_observed: Optional[int] = None, count_only: bo
     return out
 
 
+def naive_observed_nodes(lengths) -> int:
+    """Vertices of a naive diploid graph over observed walks: one chain per ordered
+    pair (p, q) of distinct walks, with max(|p|, |q|) paired vertices."""
+    ls = sorted(lengths)
+    return 2 * sum(k * L for k, L in enumerate(ls))  # each L is the max for the k shorter walks
+
+
 def gfa_stats(path: str, count_only: bool = False) -> Dict[str, object]:
     t0 = time.perf_counter()
     data = read_gfa(path)
     t_read = time.perf_counter() - t0
-    n_obs = len({w for _, w in data.haplotypes})
+    distinct = {}
+    for w in data.walks:
+        distinct.setdefault(w.digest, w.length)
+    lengths = list(distinct.values())
     out: Dict[str, object] = {
         "input": path,
         "time_read_s": t_read,
         "dropped_links": data.dropped_links,
-        "n_haplotype_walks": len(data.haplotypes),
-        "n_distinct_haplotype_walks": n_obs,
+        "n_haplotype_walks": len(data.walks),
+        "n_distinct_haplotype_walks": len(distinct),
+        "n_full_haplotype_walks": data.n_full_walks(),
         "unoriented_haplotypes": data.unoriented_haplotypes,
+        "walk_length_min_mean_max": [min(lengths), sum(lengths) / len(lengths), max(lengths)] if lengths else None,
+        "naive_ordered_observed_nodes": naive_observed_nodes(lengths),
     }
-    out.update(run_stats(data.graph, n_observed=n_obs, count_only=count_only))
+    out.update(run_stats(data.graph, n_observed=len(distinct), count_only=count_only))
     return out

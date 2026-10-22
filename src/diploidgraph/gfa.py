@@ -3,13 +3,19 @@
 Reads S (segments), L (links), P and W (haplotype paths). Links with mixed
 orientation (+/- or -/+) cannot be represented in a directed graph and are
 counted and dropped; the caller decides whether that is acceptable.
+
+Haplotype walks can be long (hundreds of thousands of steps on locus-level
+graphs), so by default only a summary of each walk is kept: its length, first
+and last vertex, and a digest for counting distinct walks. Pass
+keep_walks=True to keep the full vertex sequences.
 """
 
 from __future__ import annotations
 
+import hashlib
 import re
 from dataclasses import dataclass, field
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 from .seqgraph import SequenceGraph
 
@@ -17,23 +23,41 @@ _W_STEP = re.compile(r"([<>])([^<>]+)")
 
 
 @dataclass
+class WalkSummary:
+    name: str
+    length: int  # number of vertices
+    first: str
+    last: str
+    digest: bytes
+
+
+@dataclass
 class GFAData:
     graph: SequenceGraph
-    haplotypes: List[Tuple[str, Tuple[str, ...]]] = field(default_factory=list)  # (name, forward vertex walk)
+    walks: List[WalkSummary] = field(default_factory=list)
+    haplotypes: List[Tuple[str, Tuple[str, ...]]] = field(default_factory=list)  # only with keep_walks=True
     dropped_links: int = 0
-    unoriented_haplotypes: int = 0  # walks that mix orientations; kept out of `haplotypes`
+    unoriented_haplotypes: int = 0  # walks that mix orientations; not summarized
+
+    def n_distinct_walks(self) -> int:
+        return len({w.digest for w in self.walks})
+
+    def n_full_walks(self) -> int:
+        """Walks that run from the graph's source to its sink."""
+        s, t = self.graph.terminals()
+        return sum(1 for w in self.walks if w.first == s and w.last == t)
 
 
-def _orient(steps: List[Tuple[str, bool]]) -> Tuple[str, ...] | None:
+def _orient(steps: List[Tuple[str, bool]]) -> Optional[List[str]]:
     """steps = [(segment, is_forward)]. Return a forward walk or None if mixed."""
     if all(f for _, f in steps):
-        return tuple(s for s, _ in steps)
+        return [s for s, _ in steps]
     if not any(f for _, f in steps):
-        return tuple(s for s, _ in reversed(steps))
+        return [s for s, _ in reversed(steps)]
     return None
 
 
-def read_gfa(path: str) -> GFAData:
+def read_gfa(path: str, keep_walks: bool = False) -> GFAData:
     g = SequenceGraph()
     data = GFAData(graph=g)
     with open(path) as fh:
@@ -58,8 +82,12 @@ def read_gfa(path: str) -> GFAData:
                     name = "#".join(f[1:4])
                     steps = [(m.group(2), m.group(1) == ">") for m in _W_STEP.finditer(f[6])]
                 walk = _orient(steps)
-                if walk is None:
+                del steps
+                if walk is None or not walk:
                     data.unoriented_haplotypes += 1
-                else:
-                    data.haplotypes.append((name, walk))
+                    continue
+                digest = hashlib.blake2b("\t".join(walk).encode(), digest_size=16).digest()
+                data.walks.append(WalkSummary(name, len(walk), walk[0], walk[-1], digest))
+                if keep_walks:
+                    data.haplotypes.append((name, tuple(walk)))
     return data

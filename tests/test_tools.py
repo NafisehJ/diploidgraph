@@ -21,12 +21,14 @@ def test_gfa_reader(tmp_path):
         "P\tref\t1+,2+,4+\t*\n"
         "W\tHG1\t1\tchr\t0\t3\t<4<3<1\n"
     )
-    d = read_gfa(str(gfa))
+    d = read_gfa(str(gfa), keep_walks=True)
     assert d.graph.num_vertices() == 4 and d.graph.num_edges() == 4
     assert (3, 4) not in d.graph.edges() and ("3", "4") in set(d.graph.edges())
     walks = dict(d.haplotypes)
     assert walks["ref"] == ("1", "2", "4")
     assert walks["HG1#1#chr"] == ("1", "3", "4")  # reverse walk normalised to forward
+    assert d.n_distinct_walks() == 2 and d.n_full_walks() == 2
+    assert [w.length for w in d.walks] == [3, 3]
 
 
 def test_stats_and_log10():
@@ -34,3 +36,10 @@ def test_stats_and_log10():
     r = run_stats(random_sp_dag(50, seed=3))
     assert r["pair_coverage"] == 1.0
     assert r["diploid_vertices"] == r["n_vertices"] + r["diploid_new_vertices"]
+
+
+def test_naive_observed_nodes():
+    from diploidgraph.stats import naive_observed_nodes
+    ls = [3, 5, 4]
+    brute = sum(max(a, b) for i, a in enumerate(ls) for j, b in enumerate(ls) if i != j)
+    assert naive_observed_nodes(ls) == brute
