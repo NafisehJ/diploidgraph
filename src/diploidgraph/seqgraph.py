@@ -62,8 +62,10 @@ class SequenceGraph:
         return list(self.succ)
 
     def edges(self) -> Iterator[Edge]:
+        """Edges in a fixed order (by vertex insertion order), the same on every run."""
+        index = {v: i for i, v in enumerate(self.succ)}
         for u, outs in self.succ.items():
-            for v in outs:
+            for v in sorted(outs, key=index.__getitem__):
                 yield (u, v)
 
     def num_vertices(self) -> int:

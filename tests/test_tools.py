@@ -84,3 +84,23 @@ def test_modular_check_agrees_and_detects_errors():
     del gd.succ[h]
     assert not exactness_check(g, gd)["passed"]
     assert not exactness_check(g, gd, exact_limit_bits=0)["passed"]
+
+
+def test_example_figures_do_not_depend_on_hash_seed():
+    import os
+    import subprocess
+    import sys
+
+    code = (
+        "from diploidgraph import SequenceGraph, build_diploid\n"
+        "from diploidgraph.export import diploid_graph_dot\n"
+        "g = SequenceGraph.from_edges([('s','a'),('s','b'),('a','m'),('b','m'),"
+        "('m','c'),('m','d'),('c','d'),('c','t'),('d','t')])\n"
+        "print(diploid_graph_dot(build_diploid(g)[0]))\n"
+    )
+    outs = set()
+    for seed in ("1", "2", "3", "4"):
+        env = dict(os.environ, PYTHONHASHSEED=seed)
+        r = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True, check=True)
+        outs.add(r.stdout)
+    assert len(outs) == 1
