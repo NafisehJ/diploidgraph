@@ -56,6 +56,19 @@ def observed_support(g: SequenceGraph, walks: Iterable[Sequence[Vertex]], dec: D
     `walks` may be any iterable of vertex sequences, e.g. a generator over a GFA
     file. Only distinct walks from the source to the sink of G are used.
     """
+    full, _, counts = observed_support_with_partial(g, walks, dec)
+    return full, counts
+
+
+def observed_support_with_partial(g: SequenceGraph, walks: Iterable[Sequence[Vertex]],
+                                  dec: Decomposition | None = None):
+    """Like observed_support, plus a second result that also uses partial walks.
+
+    A partial walk (not from source to sink) contributes the P-node branches it
+    uses and its complete traversals of core blocks (cut to cut). Vertices in the
+    second result but not the first are those seen only together with partial
+    walks. Returns (supported_full, supported_with_partial, counts).
+    """
     dec = dec or decompose(g)
     s, t = dec.source, dec.sink
     rank = {v: i for i, v in enumerate(g.topological_order())}
@@ -73,21 +86,24 @@ def observed_support(g: SequenceGraph, walks: Iterable[Sequence[Vertex]], dec: D
     core = {c.source for c in core_edges} | {c.sink for c in core_edges}
     cuts = core_cuts(core_edges, rank) if core_edges else set()
 
-    used_branches: Dict[int, Set[int]] = defaultdict(set)
-    blocks: Dict[Vertex, Set[Tuple[Vertex, ...]]] = defaultdict(set)  # keyed by the opening cut
+    # index 0: full walks only; index 1: full and partial walks
+    used_branches = (defaultdict(set), defaultdict(set))
+    blocks = (defaultdict(set), defaultdict(set))  # keyed by the opening cut
     seen: Set[bytes] = set()
-    counts = {"walks": 0, "full": 0, "distinct_full": 0}
+    counts = {"walks": 0, "full": 0, "distinct_full": 0, "distinct_partial": 0}
 
     for walk in walks:
         counts["walks"] += 1
-        if not walk or walk[0] != s or walk[-1] != t:
+        if len(walk) < 2:
             continue
-        counts["full"] += 1
+        is_full = walk[0] == s and walk[-1] == t
+        counts["full"] += is_full
         digest = hashlib.blake2b("\t".join(map(str, walk)).encode(), digest_size=16).digest()
         if digest in seen:
             continue
         seen.add(digest)
-        counts["distinct_full"] += 1
+        counts["distinct_full" if is_full else "distinct_partial"] += 1
+        targets = (0, 1) if is_full else (1,)
 
         crossed: Set[int] = set()
         for a, b in zip(walk, walk[1:]):
@@ -98,7 +114,8 @@ def observed_support(g: SequenceGraph, walks: Iterable[Sequence[Vertex]], dec: D
                     if par.uid in crossed:
                         break  # this P-node and all its ancestors are already recorded
                     crossed.add(par.uid)
-                    used_branches[par.uid].add(idx)
+                    for k in targets:
+                        used_branches[k][par.uid].add(idx)
                 node = par
 
         if core:
@@ -108,23 +125,27 @@ def observed_support(g: SequenceGraph, walks: Iterable[Sequence[Vertex]], dec: D
                     continue
                 cur.append(v)
                 if v in cuts:
-                    if len(cur) > 1:
-                        blocks[cur[0]].add(tuple(cur))
+                    if len(cur) > 1 and cur[0] in cuts:  # a complete block traversal
+                        for k in targets:
+                            blocks[k][cur[0]].add(tuple(cur))
                     cur = [v]
 
-    supported: Dict[str, Set[Key]] = {k: set() for k in KINDS}
-    for uid, branches in used_branches.items():
-        for i in branches:
-            for j in branches:
-                if i != j:
-                    supported["het"].add(("het", uid, i, j))
-    for subs in blocks.values():
-        subs = sorted(subs)
-        for A in subs:
-            for B in subs:
-                if A != B:
-                    _replay(A, B, rank, edge_uid, supported)
-    return supported, counts
+    results = []
+    for k in (0, 1):
+        supported: Dict[str, Set[Key]] = {kind: set() for kind in KINDS}
+        for uid, branches in used_branches[k].items():
+            for i in branches:
+                for j in branches:
+                    if i != j:
+                        supported["het"].add(("het", uid, i, j))
+        for subs in blocks[k].values():
+            subs = sorted(subs)
+            for A in subs:
+                for B in subs:
+                    if A != B:
+                        _replay(A, B, rank, edge_uid, supported)
+        results.append(supported)
+    return results[0], results[1], counts
 
 
 def _replay(A: Tuple[Vertex, ...], B: Tuple[Vertex, ...], rank, edge_uid, supported) -> None:

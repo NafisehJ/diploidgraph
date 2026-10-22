@@ -68,3 +68,25 @@ def test_all_paths_observed_supports_everything():
     supported, _ = observed_support(g, g.all_paths(s, t), dec)
     new_vertices = {v for v in gd.succ if v[0] != "hom"}
     assert set().union(*supported.values()) == new_vertices
+
+
+@pytest.mark.parametrize("seed", range(20))
+def test_partial_walks_only_add(seed):
+    from diploidgraph.support import observed_support_with_partial
+    rng = random.Random(seed)
+    g = random_dag(n_ops=10, extra_edges=1 + seed % 3, seed=seed)
+    gd, dec = build_diploid(g)
+    s, t = g.terminals()
+    paths = g.all_paths(s, t)
+    observed = rng.sample(paths, min(len(paths), 3))
+    others = [p for p in paths if p not in observed]
+    partial = [p[1:] for p in others[:2]] + [p[:-1] for p in others[2:4]]
+    full_only, with_partial, counts = observed_support_with_partial(g, observed + partial, dec)
+    plain, _ = observed_support(g, observed, dec)
+    assert full_only == plain
+    for k in full_only:
+        assert full_only[k] <= with_partial[k] <= {v for v in gd.succ if v[0] == k}
+    # making the partial walks complete can only add more
+    complete, _ = observed_support(g, observed + others[:4], dec)
+    for k in full_only:
+        assert with_partial[k] <= complete[k]
