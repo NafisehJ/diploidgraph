@@ -126,6 +126,32 @@ not move); grey diamonds are pair states `[hap 1 | hap 2]`.
 <img src="examples/out/06_w_motif_diploid.png" width="100%">
 </p>
 
+## Results on real pangenome loci
+
+HPRC v2.0 Minigraph-Cactus subgraphs (GRCh38-based, `ec1M`). Both inputs are
+two-terminal DAGs with no preprocessing. Measured on a laptop (WSL Ubuntu 22.04,
+aarch64, 8 GB RAM), single run.
+
+| | BRCA1 | MHC |
+|---|---|---|
+| Input vertices / edges | 2,704 / 3,828 | 349,475 / 482,220 |
+| Haplotype walks (distinct; source-to-sink) | 465 (455; 463) | 466 (466; 462) |
+| P-nodes (max branches) | 982 (3) | 114,540 (4) |
+| Non-series-parallel core: vertices / edges | 203 / 340 | 28,664 / 45,545 |
+| Diploid graph vertices / edges | 8,250 / 12,592 | 887,929 / 1,361,520 |
+| Diploid vertices per input vertex | 3.05 | 2.54 |
+| Naive pairing of observed walks, ordered pairs | 206,570 | 216,690 |
+| Naive pairing of observed walks, paired vertices | 354,168,814 | 46,485,747,514 |
+| Ordered pairs of all source-to-sink paths represented | about 10^570 | about 10^71057 |
+| Decompose + build time | 0.03 s | 6.5 s |
+| Peak memory (whole process) | 27 MB | 971 MB |
+| Exactness check (weighted walk count = N^2) | passed | sizes only (`--count-only`) |
+
+"Paired vertices" is the size of a naive diploid graph with one chain per
+ordered pair of observed walks, as long as the longer walk of the pair.
+Reading the MHC GFA takes about 50 s in pure Python and is not included in the
+build time.
+
 ## Experiments
 
 See [experiments/README.md](experiments/README.md) for:
