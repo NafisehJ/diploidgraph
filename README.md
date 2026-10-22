@@ -56,6 +56,20 @@ included in the build time. The 0.14% of MHC vertices not used by complete
 haplotype pairs are used by the 4 haplotype walks that cover the region only
 partly.
 
+## Reproduce the results
+
+```bash
+bash reproduce.sh           # BRCA1 and MHC: download, convert, build, verify, measure (about 15 min)
+bash reproduce.sh --quick   # BRCA1 only (under a minute)
+```
+
+The script downloads the two HPRC graphs, converts them to GFA with
+[vg](https://github.com/vgteam/vg) (only needed once), builds and verifies the
+diploid graphs, measures which added vertices are used by the observed
+haplotypes, and prints the table above. Sizes are reproduced exactly; times and
+memory depend on the machine. If the GFA files already exist, point to them with
+`DATA=/path/to/folder bash reproduce.sh` and vg is not needed.
+
 ## Install
 
 ```bash
