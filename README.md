@@ -144,9 +144,9 @@ aarch64, 8 GB RAM), single run.
 | Diploid vertices per input vertex | 3.05 | 2.54 |
 | Naive pairing of observed walks, paired vertices | 354,168,814 | 46,485,747,514 |
 | Ordered pairs of all source-to-sink paths represented | about 10^570 | about 10^71057 |
-| Decompose + build time | 0.03 s | 6.5 s |
-| Peak memory (whole process) | 27 MB | 971 MB |
-| Exactness check (weighted walk count = N^2) | passed | sizes only (`--count-only`) |
+| Decompose + build time | 0.03 s | 9.6 s |
+| Peak memory (whole process) | 27 MB | 1.2 GB |
+| Exactness check (weighted walk count = N^2) | passed (exact) | passed (modulo two large primes) |
 
 Naive pairing builds one chain of paired vertices for every ordered pair of
 distinct observed walks, as long as the longer walk of the pair; "paired

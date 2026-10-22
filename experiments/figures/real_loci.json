@@ -1,7 +1,19 @@
 {
-  "source": "HPRC v2.0 Minigraph-Cactus (GRCh38, ec1M); measured Oct 22, 2026 with diploidgraph (commit 56a1305 or later)",
-  "BRCA1": {"input_nodes": 2704, "diploid_nodes": 8250, "naive_observed_nodes": 354168814,
-            "haplotypes": 463, "build_s": 0.034, "supported_fraction": 1.0},
-  "MHC":   {"input_nodes": 349475, "diploid_nodes": 887929, "naive_observed_nodes": 46485747514,
-            "haplotypes": 462, "build_s": 6.48, "supported_fraction": 0.998633}
+  "source": "HPRC v2.0 Minigraph-Cactus (GRCh38, ec1M); measured Oct 22, 2026 with diploidgraph; both graphs fully built and checked",
+  "BRCA1": {
+    "input_nodes": 2704,
+    "diploid_nodes": 8250,
+    "naive_observed_nodes": 354168814,
+    "haplotypes": 463,
+    "build_s": 0.034,
+    "supported_fraction": 1.0
+  },
+  "MHC": {
+    "input_nodes": 349475,
+    "diploid_nodes": 887929,
+    "naive_observed_nodes": 46485747514,
+    "haplotypes": 462,
+    "build_s": 9.63,
+    "supported_fraction": 0.998633
+  }
 }
