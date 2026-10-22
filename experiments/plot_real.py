@@ -60,9 +60,14 @@ def main() -> None:
     for i, l in enumerate(loci):
         d = data[l]
         ratio = d["naive_observed_nodes"] / d["diploid_nodes"]
-        x = i + (width + gap) / 2
-        ax.text(x, d["naive_observed_nodes"] * 8, f"~{round(ratio, -3):,.0f}\u00d7 smaller", ha="center",
-                va="bottom", fontsize=13, fontweight="bold", color=OURS)
+        x = i  # centre of "our diploid graph" bar
+        lo, hi = d["diploid_nodes"] * 4.5, d["naive_observed_nodes"]
+        ax.annotate("", xy=(x, hi), xytext=(x, lo), zorder=5,
+                    arrowprops=dict(arrowstyle="<->", color=OURS, lw=1.6, shrinkA=0, shrinkB=0))
+        ax.plot([x, x + width / 2 + gap], [hi, hi], color=OURS, lw=1, ls=(0, (2, 2)), zorder=5)
+        mid = (lo * hi) ** 0.5
+        ax.text(x - 0.03, mid, f"~{round(ratio, -3):,.0f}\u00d7\nfewer nodes\nthan naive", ha="right", va="center",
+                fontsize=12, fontweight="bold", color=OURS, zorder=5, linespacing=1.15)
 
     ax.set_yscale("log")
     ax.set_ylim(1e3, 1e13)
