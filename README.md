@@ -140,15 +140,16 @@ aarch64, 8 GB RAM), single run.
 | Non-series-parallel core: vertices / edges | 203 / 340 | 28,664 / 45,545 |
 | Diploid graph vertices / edges | 8,250 / 12,592 | 887,929 / 1,361,520 |
 | Diploid vertices per input vertex | 3.05 | 2.54 |
-| Naive pairing of observed walks, ordered pairs | 206,570 | 216,690 |
 | Naive pairing of observed walks, paired vertices | 354,168,814 | 46,485,747,514 |
 | Ordered pairs of all source-to-sink paths represented | about 10^570 | about 10^71057 |
 | Decompose + build time | 0.03 s | 6.5 s |
 | Peak memory (whole process) | 27 MB | 971 MB |
 | Exactness check (weighted walk count = N^2) | passed | sizes only (`--count-only`) |
 
-"Paired vertices" is the size of a naive diploid graph with one chain per
-ordered pair of observed walks, as long as the longer walk of the pair.
+Naive pairing builds one chain of paired vertices for every ordered pair of
+distinct observed walks, as long as the longer walk of the pair; "paired
+vertices" is the total size of these chains, in the same unit as the diploid
+graph's vertices.
 Reading the MHC GFA takes about 50 s in pure Python and is not included in the
 build time.
 
