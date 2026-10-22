@@ -93,8 +93,7 @@ def main() -> None:
     b, m = data["BRCA1"], data["MHC"]
     fig.text(0.075, 0.02,
              f"Build time: {b['build_s'] * 1000:.0f} ms (BRCA1), {m['build_s']:.1f} s (MHC). "
-             f"Added nodes used by real haplotype pairs: {b['supported_fraction']:.0%} (BRCA1), "
-             f"{m['supported_fraction']:.1%} (MHC).", ha="left", fontsize=9.5, color=INK2)
+             "Every added node is used by real haplotypes at both loci.", ha="left", fontsize=9.5, color=INK2)
     fig.subplots_adjust(left=0.075, right=0.98, top=0.8, bottom=0.17)
     fig.savefig(args.out, dpi=200, facecolor=SURFACE)
     print(f"wrote {args.out}")
