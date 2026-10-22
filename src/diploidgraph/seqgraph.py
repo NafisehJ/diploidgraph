@@ -8,6 +8,7 @@ implies that every vertex lies on at least one s-t path.
 
 from __future__ import annotations
 
+import heapq
 from collections import deque
 from dataclasses import dataclass, field
 from typing import Dict, Hashable, Iterable, Iterator, List, Optional, Set, Tuple
@@ -78,17 +79,22 @@ class SequenceGraph:
         return [v for v in self.succ if not self.succ[v]]
 
     def topological_order(self) -> List[Vertex]:
-        """Kahn's algorithm. Raises NotTwoTerminalDAG if a cycle exists."""
+        """Kahn's algorithm with ties broken by vertex insertion order, so the
+        result is the same on every run (set iteration order is not).
+        Raises NotTwoTerminalDAG if a cycle exists."""
+        index = {v: i for i, v in enumerate(self.succ)}
         indeg = {v: len(p) for v, p in self.pred.items()}
-        queue = deque(v for v, d in indeg.items() if d == 0)
+        heap = [index[v] for v, d in indeg.items() if d == 0]
+        heapq.heapify(heap)
+        verts = list(self.succ)
         order: List[Vertex] = []
-        while queue:
-            u = queue.popleft()
+        while heap:
+            u = verts[heapq.heappop(heap)]
             order.append(u)
             for w in self.succ[u]:
                 indeg[w] -= 1
                 if indeg[w] == 0:
-                    queue.append(w)
+                    heapq.heappush(heap, index[w])
         if len(order) != len(self.succ):
             raise NotTwoTerminalDAG("graph contains a directed cycle")
         return order

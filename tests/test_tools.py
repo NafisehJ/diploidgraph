@@ -43,3 +43,25 @@ def test_naive_observed_nodes():
     ls = [3, 5, 4]
     brute = sum(max(a, b) for i, a in enumerate(ls) for j, b in enumerate(ls) if i != j)
     assert naive_observed_nodes(ls) == brute
+
+
+def test_sizes_do_not_depend_on_hash_seed(tmp_path):
+    import json
+    import os
+    import subprocess
+    import sys
+
+    code = (
+        "import json\n"
+        "from diploidgraph import SequenceGraph, diploid_size\n"
+        "from diploidgraph.generators import random_dag\n"
+        "g0 = random_dag(n_ops=400, extra_edges=12, seed=4)\n"
+        "g = SequenceGraph.from_edges([(f'v{u}', f'v{v}') for u, v in g0.edges()])\n"
+        "print(json.dumps(diploid_size(g)))\n"
+    )
+    outs = set()
+    for seed in ("1", "2", "3"):
+        env = dict(os.environ, PYTHONHASHSEED=seed)
+        r = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True, check=True)
+        outs.add(r.stdout.strip())
+    assert len(outs) == 1, outs
