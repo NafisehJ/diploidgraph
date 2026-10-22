@@ -185,3 +185,9 @@ notebooks/          original prototype notebooks (superseded by the package)
   doi     = {10.1101/2025.07.05.662656}
 }
 ```
+
+## License
+
+This software is released under the [PolyForm Noncommercial License 1.0.0](LICENSE.md).
+It is free to use for research, teaching, and other noncommercial purposes.
+Commercial use requires a separate license; contact Nafiseh Jafarzadeh.
