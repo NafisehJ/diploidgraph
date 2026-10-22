@@ -19,6 +19,7 @@ from diploidgraph.stats import gfa_stats
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("gfa", nargs="+")
+    ap.add_argument("--count-only", action="store_true", help="sizes only, without building G_D")
     ap.add_argument("--out", default="experiments/results/real.csv")
     args = ap.parse_args()
 
@@ -26,7 +27,7 @@ def main() -> None:
     out.parent.mkdir(parents=True, exist_ok=True)
     rows = []
     for path in args.gfa:
-        r = gfa_stats(path)
+        r = gfa_stats(path, count_only=args.count_only)
         print(json.dumps(r, indent=2))
         rows.append(r)
     with out.open("w", newline="") as fh:

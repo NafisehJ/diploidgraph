@@ -108,3 +108,16 @@ def test_core_size_bound():
     (r,) = dec.nodes("R")
     n_core = len({c.source for c in r.children} | {c.sink for c in r.children})
     assert gd.count_by_kind().get("pair", 0) <= n_core * (n_core - 1)
+
+
+@pytest.mark.parametrize("seed", range(20))
+def test_size_without_building_matches(seed):
+    from diploidgraph import diploid_size
+    g = random_dag(n_ops=200 + 50 * seed, extra_edges=seed, seed=seed)
+    gd, dec = build_diploid(g)
+    size = diploid_size(g, dec)
+    kinds = gd.count_by_kind()
+    for k in ("hom", "het", "fork", "pair", "step"):
+        assert size[k] == kinds.get(k, 0), k
+    assert size["vertices"] == gd.num_vertices()
+    assert size["edges"] == gd.num_edges()

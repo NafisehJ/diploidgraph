@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import math
 import time
-import tracemalloc
+import resource
+import sys
 from typing import Dict, Optional
 
 from .decompose import decompose
-from .diploid import build_diploid, naive_pair_count
+from .diploid import build_diploid, diploid_size, naive_pair_count
 from .gfa import read_gfa
 from .seqgraph import SequenceGraph
 from .validate import coverage
@@ -22,22 +23,37 @@ def log10_int(x: int) -> float:
     return math.log10(x >> k) + k * math.log10(2)
 
 
-def run_stats(g: SequenceGraph, n_observed: Optional[int] = None) -> Dict[str, object]:
-    out: Dict[str, object] = {"n_vertices": g.num_vertices(), "n_edges": g.num_edges()}
-    s, t = g.terminals()
+def peak_rss_mb() -> float:
+    """Peak resident memory of this process so far, in MB (Linux/macOS)."""
+    kb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    return kb / 1024 / (1024 if sys.platform == "darwin" else 1)
 
-    tracemalloc.start()
+
+def run_stats(g: SequenceGraph, n_observed: Optional[int] = None, count_only: bool = False) -> Dict[str, object]:
+    """Sizes, timings and memory for one input graph.
+
+    count_only=True computes the sizes of G_D without building it (for graphs
+    whose non-series-parallel core is too large to build in Python); pair
+    coverage is then not checked.
+    """
+    out: Dict[str, object] = {"n_vertices": g.num_vertices(), "n_edges": g.num_edges(), "count_only": count_only}
+    g.terminals()
+
     t0 = time.perf_counter()
     dec = decompose(g)
     t1 = time.perf_counter()
-    gd, _ = build_diploid(g, dec)
+    if count_only:
+        size = diploid_size(g, dec)
+        gd = None
+    else:
+        gd, _ = build_diploid(g, dec)
+        kinds = gd.count_by_kind()
+        size = {k: kinds.get(k, 0) for k in ("hom", "het", "fork", "pair", "step")}
+        size.update(vertices=gd.num_vertices(), edges=gd.num_edges())
     t2 = time.perf_counter()
-    peak = tracemalloc.get_traced_memory()[1]
-    tracemalloc.stop()
 
     pnodes = dec.nodes("P")
     n_paths = dec.root.n_paths
-    represented, total = coverage(g, gd)
     out.update(
         is_series_parallel=dec.is_series_parallel,
         n_pnodes=len(pnodes),
@@ -47,21 +63,25 @@ def run_stats(g: SequenceGraph, n_observed: Optional[int] = None) -> Dict[str, o
         core_edges=sum(len(r.children) for r in dec.nodes("R")),
         time_decompose_s=t1 - t0,
         time_build_s=t2 - t1,
-        peak_python_memory_bytes=peak,
-        diploid_vertices=gd.num_vertices(),
-        diploid_edges=gd.num_edges(),
-        diploid_new_vertices=gd.num_het_vertices(),
-        **{f"diploid_kind_{k}": gd.count_by_kind().get(k, 0) for k in ("hom", "het", "fork", "pair", "step")},
+        peak_rss_mb=peak_rss_mb(),
+        diploid_vertices=size["vertices"],
+        diploid_edges=size["edges"],
+        diploid_new_vertices=size["vertices"] - size["hom"],
+        **{f"diploid_kind_{k}": size[k] for k in ("hom", "het", "fork", "pair", "step")},
         log10_st_paths=log10_int(n_paths),
         log10_naive_ordered_all_paths=log10_int(naive_pair_count(n_paths, ordered=True)),
-        pair_coverage=represented / total if total else None,
     )
+    if gd is not None:
+        represented, total = coverage(g, gd)
+        out["pair_coverage"] = represented / total if total else None
+    else:
+        out["pair_coverage"] = None
     if n_observed is not None:
         out["naive_ordered_observed"] = naive_pair_count(n_observed, ordered=True)
     return out
 
 
-def gfa_stats(path: str) -> Dict[str, object]:
+def gfa_stats(path: str, count_only: bool = False) -> Dict[str, object]:
     t0 = time.perf_counter()
     data = read_gfa(path)
     t_read = time.perf_counter() - t0
@@ -74,5 +94,5 @@ def gfa_stats(path: str) -> Dict[str, object]:
         "n_distinct_haplotype_walks": n_obs,
         "unoriented_haplotypes": data.unoriented_haplotypes,
     }
-    out.update(run_stats(data.graph, n_observed=n_obs))
+    out.update(run_stats(data.graph, n_observed=n_obs, count_only=count_only))
     return out

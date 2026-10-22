@@ -174,6 +174,51 @@ def _add_core(gd: DiploidGraph, r: DecompNode, rank: Dict[Vertex, int]) -> None:
             link(step, state(c.sink, other) if h == 1 else state(other, c.sink))
 
 
+def diploid_size(g: SequenceGraph, dec: Decomposition | None = None) -> Dict[str, int]:
+    """Vertex and edge counts of G_D, by kind, without building it.
+
+    Gives the same numbers as build_diploid (checked in the tests) but stores
+    only integer-coded pair states, so it runs on graphs whose core is too large
+    to materialize in Python.
+    """
+    dec = dec or decompose(g)
+    het = sum(len(p.children) * (len(p.children) - 1) for p in dec.nodes("P"))
+    counts = {"hom": g.num_vertices(), "het": het, "fork": 0, "pair": 0, "step": 0}
+    n_edges = g.num_edges() + 2 * het
+    rank = {v: i for i, v in enumerate(g.topological_order())}
+    for r in dec.nodes("R"):
+        order = sorted({c.source for c in r.children} | {c.sink for c in r.children}, key=rank.__getitem__)
+        pos = {v: i for i, v in enumerate(order)}
+        n = len(order)
+        out: List[List[int]] = [[] for _ in range(n)]
+        for c in r.children:
+            out[pos[c.source]].append(pos[c.sink])
+        seen: Set[int] = set()
+        queue: deque = deque()
+        for heads in out:
+            counts["fork"] += len(heads) * (len(heads) - 1)
+            for a in heads:
+                for b in heads:
+                    if a != b and a * n + b not in seen:
+                        seen.add(a * n + b)
+                        queue.append(a * n + b)
+        while queue:
+            u, v = divmod(queue.popleft(), n)
+            lag, other, first = (u, v, True) if u < v else (v, u, False)
+            for w in out[lag]:
+                counts["step"] += 1
+                if w != other:
+                    key = (w * n + other) if first else (other * n + w)
+                    if key not in seen:
+                        seen.add(key)
+                        queue.append(key)
+        counts["pair"] += len(seen)
+    n_edges += 2 * counts["fork"] + 2 * counts["step"]
+    counts["vertices"] = sum(counts[k] for k in ("hom", "het", "fork", "pair", "step"))
+    counts["edges"] = n_edges
+    return counts
+
+
 def naive_pair_count(n_haplotypes: int, ordered: bool = False) -> int:
     """Number of vertices a naive construction creates: one per haplotype pair."""
     n = n_haplotypes
