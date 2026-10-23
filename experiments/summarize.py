@@ -145,6 +145,7 @@ def main() -> None:
                 "no_decomposition_nodes": j["order"]["product_vertices_min_median_max"][1],
                 "naive_observed_nodes": j["stats"]["naive_ordered_observed_nodes"],
                 "haplotypes": j["stats"]["n_distinct_full_haplotype_walks"],
+                **({"assembly_haplotypes": j["external"]["pangenie_panel_haplotypes"]} if j.get("external") else {}),
                 "build_s": j["stats"]["time_decompose_s"] + j["stats"]["time_build_s"],
                 "ratio_median": j["order"]["median_ratio_product_over_ours"],
                 "orders": j["order"]["orders"],

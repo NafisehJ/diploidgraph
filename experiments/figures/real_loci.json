@@ -8,7 +8,8 @@
     "haplotypes": 453,
     "build_s": 0.040293334999660146,
     "ratio_median": 2.318705565089483,
-    "orders": 21
+    "orders": 21,
+    "assembly_haplotypes": 461
   },
   "MHC": {
     "input_nodes": 349475,
@@ -18,6 +19,7 @@
     "haplotypes": 462,
     "build_s": 9.757265365000421,
     "ratio_median": 2.992925880134235,
-    "orders": 21
+    "orders": 21,
+    "assembly_haplotypes": 460
   }
 }

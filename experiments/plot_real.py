@@ -53,8 +53,8 @@ def main() -> None:
     width, gap = 0.2, 0.02
     series = [("Input pangenome graph", "input_nodes", INPUT),
               ("Our diploid graph", "diploid_nodes", OURS),
-              ("Same construction without decomposition (same pairs)", "no_decomposition_nodes", PRODUCT),
-              ("Naive pairing of observed haplotypes (paired positions)", "naive_observed_nodes", NAIVE)]
+              ("Cartesian product with a fixed order of moves (no decomposition)", "no_decomposition_nodes", PRODUCT),
+              ("Naive pairing of observed haplotypes", "naive_observed_nodes", NAIVE)]
     offset = (len(series) - 1) / 2
     for k, (label, key, color) in enumerate(series):
         xs = [i + (k - offset) * (width + gap) for i in range(len(loci))]
@@ -66,9 +66,12 @@ def main() -> None:
     for i, l in enumerate(loci):
         d = data[l]
         ratio = d.get("ratio_median", d["no_decomposition_nodes"] / d["diploid_nodes"])
+        naive = d["naive_observed_nodes"] / d["diploid_nodes"]
+        naive_txt = f"{round(naive, -3):,.0f}" if naive >= 1000 else f"{naive:,.0f}"
         x = i + (1 - offset) * (width + gap)  # our bar
-        ax.text(x, d["no_decomposition_nodes"] * 12, f"{ratio:.1f}\u00d7 fewer than\nwithout decomposition", ha="center", va="bottom",
-                fontsize=11, fontweight="bold", color=OURS, zorder=5, linespacing=1.15)
+        ax.text(x, d["no_decomposition_nodes"] * 12,
+                f"{ratio:.1f}\u00d7 smaller than Cartesian\n{naive_txt}\u00d7 smaller than naive",
+                ha="center", va="bottom", fontsize=10.5, fontweight="bold", color=OURS, zorder=5, linespacing=1.3)
 
     ax.set_yscale("log")
     ax.set_ylim(1e3, 1e13)
@@ -77,7 +80,8 @@ def main() -> None:
     ax.set_yticklabels(["1K", "100K", "10M", "1B", "100B", "10T"], color=MUTED)
     ax.set_ylabel("Nodes (log scale)", color=INK2)
     ax.set_xticks(range(len(loci)))
-    ax.set_xticklabels([f"{l}\n{data[l]['input_nodes']:,} nodes, {data[l]['haplotypes']} distinct haplotypes" for l in loci],
+    ax.set_xticklabels([f"{l}\n{data[l]['input_nodes']:,} nodes, {data[l].get('assembly_haplotypes', data[l]['haplotypes'])} haplotypes"
+                        for l in loci],
                        color=INK)
     ax.grid(axis="y", color=GRID, lw=0.8, zorder=0)
     for s in ("top", "right", "left"):
@@ -87,16 +91,13 @@ def main() -> None:
 
     fig.suptitle("Diploid graph size on real pangenome loci", x=0.075, ha="left", fontsize=15,
                  fontweight="bold", color=INK, y=0.97)
-    fig.text(0.075, 0.885, "HPRC v2.0 Minigraph-Cactus loci. Our graph and the ablation represent every pair of "
-             "haplotypes,\nincluding recombinants; naive pairing lists observed pairs only, in paired positions.",
-             ha="left", fontsize=10, color=INK2)
     ax.legend(loc="upper left", frameon=False, fontsize=10, bbox_to_anchor=(0.0, 1.0))
-    times = ", ".join(f"{data[l]['build_s']:.2f} s ({l})" for l in loci)
-    fig.text(0.075, 0.02,
-             f"Our graph and the ablation: median over {data[loci[0]].get('orders', 'several')} vertex orders. "
-             f"Build time: {times}.\nSampled haplotype pairs each decoded exactly once.",
-             ha="left", fontsize=9.5, color=INK2, linespacing=1.4)
-    fig.subplots_adjust(left=0.075, right=0.98, top=0.8, bottom=0.17)
+    times = ", ".join(f"{data[l]['build_s']:.2g} s ({l})" for l in loci)
+    fig.text(0.075, 0.03,
+             f"Blue and green: median over {data[loci[0]].get('orders', 'several')} vertex orders. "
+             f"Build time on a laptop (8 GB RAM): {times}.",
+             ha="left", fontsize=9.5, color=INK2)
+    fig.subplots_adjust(left=0.075, right=0.98, top=0.87, bottom=0.15)
     fig.savefig(args.out, dpi=200, facecolor=SURFACE)
     print(f"wrote {args.out}")
 
