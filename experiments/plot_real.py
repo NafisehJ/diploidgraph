@@ -52,7 +52,7 @@ def main() -> None:
 
     width, gap = 0.2, 0.02
     series = [("Input pangenome graph", "input_nodes", INPUT),
-              ("Our diploid graph", "diploid_nodes", OURS),
+              ("Our diploid graph (with decomposition)", "diploid_nodes", OURS),
               ("Cartesian product with a fixed order of moves (no decomposition)", "no_decomposition_nodes", PRODUCT),
               ("Naive pairing of observed haplotypes", "naive_observed_nodes", NAIVE)]
     offset = (len(series) - 1) / 2
@@ -80,7 +80,7 @@ def main() -> None:
     ax.set_yticklabels(["1K", "100K", "10M", "1B", "100B", "10T"], color=MUTED)
     ax.set_ylabel("Nodes (log scale)", color=INK2)
     ax.set_xticks(range(len(loci)))
-    ax.set_xticklabels([f"{l}\n{data[l]['input_nodes']:,} nodes, {data[l].get('assembly_haplotypes', data[l]['haplotypes'])} haplotypes"
+    ax.set_xticklabels([f"{l}\n{data[l].get('assembly_haplotypes', data[l]['haplotypes'])} haplotypes"
                         for l in loci],
                        color=INK)
     ax.grid(axis="y", color=GRID, lw=0.8, zorder=0)
