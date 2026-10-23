@@ -93,7 +93,8 @@ def diploid_graph_dot(gd: DiploidGraph, name: str = "GD", compact_steps: bool = 
                 gad = gd.gadget[b]
                 hap, seg = (1, gad.seg1) if gad.seg1 is not None else (2, gad.seg2)
                 (c,) = gd.succ[b]
-                lines.append(f"  {ids[a]} -> {ids[c]} [label={_q(f'h{hap} \u2192 {_seg_label(seg, True)}')}];")
+                label = "h" + str(hap) + " \u2192 " + _seg_label(seg, True)  # no backslash inside f-string (Python 3.10)
+                lines.append(f"  {ids[a]} -> {ids[c]} [label={_q(label)}];")
             else:
                 lines.append(f"  {ids[a]} -> {ids[b]};")
     lines.append("}")
