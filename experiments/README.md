@@ -119,7 +119,8 @@ papers, and what each one covers.
 
 Proxies (same graph, same haplotypes as the other sections): bubbles and
 top-level snarls are the intervals between consecutive vertices that lie on
-every source-to-sink path; panel haplotypes are the complete P/W walks; the
+every source-to-sink path; panel haplotypes are the complete P/W walks
+without the reference samples GRCh38 and CHM13 (`--reference-samples`); the
 alleles of a bubble are the distinct sub-walks of the panel haplotypes through
 it. PanGenie normally reads a bubble VCF, and vg call may find traversals
 differently, so these are counts on our graph, not measurements of the tools.

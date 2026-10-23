@@ -56,8 +56,8 @@ vertex orders; edges, time and memory in the GFA vertex order, single run.
 | No decomposition / diploid graph, ratio of medians | 2.3x | 3.0x |
 | Naive pairing of distinct complete haplotypes, paired positions | 351,071,710 | 45,696,235,174 |
 | Ordered pairs of source-to-sink paths represented | about 10^570 | about 10^71057 |
-| PanGenie model, counted on the same graph: bubbles (k = 31) / hidden states M x N^2 (N = complete walks) | 545 / 116,831,105 (N = 463) | 38,844 / 8,291,018,736 (N = 462) |
-| PanGenie model: ordered pairs it can decode (mosaics of the panel haplotypes) | about 10^436 | about 10^34198 |
+| PanGenie model, counted on the same graph: bubbles (k = 31) / hidden states M x N^2 (N = panel haplotypes) | 545 / 115,823,945 (N = 461) | 38,829 / 8,216,216,400 (N = 460) |
+| PanGenie model: ordered pairs it can decode (mosaics of the panel haplotypes) | about 10^436 | about 10^34183 |
 | vg call model, counted on the same graph: top-level sites / candidate traversals (no phase between sites) | 792 / 1,940 | 85,388 / 193,211 |
 | Sampled pairs decoded exactly once: observed haplotypes; random-successor paths | 1000/1000; 1000/1000 | 100/100; 100/100 |
 | Whole-graph check (weighted walk count = N^2) | passed (exact) | passed (modulo two primes) |
@@ -81,9 +81,10 @@ How to read the comparisons:
 * **PanGenie and vg call** rows are counts on the same graph, not runs of the
   tools (`experiments/external_state_space.py`, section 8 of
   `experiments/README.md`). PanGenie (Ebler et al. 2022) has N^2 hidden states
-  per bubble, one per ordered pair of the N complete panel haplotype walks
-  (N = 463 for BRCA1, 462 for MHC; duplicates included, as PanGenie keeps every
-  panel haplotype), and decodes only pairs of mosaics of the panel
+  per bubble, one per ordered pair of the N panel haplotypes: the complete
+  assembly walks, without the GRCh38 and CHM13 reference walks (N = 461 for
+  BRCA1, 460 for MHC; identical haplotypes are kept, as in a PanGenie panel).
+  It decodes only pairs of mosaics of the panel
   haplotypes that switch between bubbles. vg call (Hickey et al. 2020)
   genotypes each top-level snarl on its own, here from the haplotype traversals.
   States and diploid-graph vertices are different units, so the rows show what
