@@ -102,28 +102,25 @@ median ratio.
 python experiments/no_decomposition.py BRCA1.gfa --json brca1_nodecomp.json
 ```
 
-## 8. State spaces of external genotypers (size only)
+## 8. State space of PanGenie (size only)
 
-No reads and no genotyping: on the same GFA, this counts what the genotyping
-step of PanGenie and of vg call works with, as described in their methods
-papers, and what each one covers.
+No reads and no genotyping: on the same GFA, this counts the hidden states of
+PanGenie's genotyping model, as described in its methods paper, and which
+haplotype pairs it covers.
 
 * **PanGenie** (Ebler et al. 2022, Methods, "Hidden states and transitions"):
   one hidden state for every ordered pair (i, j) of the N panel haplotype paths
   at every bubble, so N^2 states per bubble; bubbles less than k = 31 bp apart
   are combined. It covers ordered pairs of mosaics of the panel haplotypes that
   switch only between bubbles; inside a bubble only panel alleles occur.
-* **vg call** (Hickey et al. 2020, Methods, "SV genotyping algorithm"): each
-  top-level snarl is genotyped on its own from candidate traversals (the two
-  best supported give the genotype). No phase is carried between snarls.
 
-Proxies (same graph, same haplotypes as the other sections): bubbles and
-top-level snarls are the intervals between consecutive vertices that lie on
+Proxies (same graph, same haplotypes as the other sections): bubbles are the
+intervals between consecutive vertices that lie on
 every source-to-sink path; panel haplotypes are the complete P/W walks
 without the reference samples GRCh38 and CHM13 (`--reference-samples`); the
 alleles of a bubble are the distinct sub-walks of the panel haplotypes through
-it. PanGenie normally reads a bubble VCF, and vg call may find traversals
-differently, so these are counts on our graph, not measurements of the tools.
+it. PanGenie normally reads a bubble VCF, so these are counts on our graph,
+not measurements of the tool.
 
 ```bash
 python experiments/external_state_space.py BRCA1.gfa MHC.gfa --out experiments/results/external.csv

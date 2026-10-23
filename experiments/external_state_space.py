@@ -1,4 +1,4 @@
-"""State-space sizes of PanGenie and vg call on the same GFA, next to ours.
+"""State-space size of the PanGenie model on the same GFA, next to ours.
 
     python experiments/external_state_space.py BRCA1.gfa MHC.gfa --out experiments/results/external.csv
 
@@ -10,8 +10,6 @@ reports what it covers next to how many states it uses:
 * PanGenie: N^2 ordered pairs of panel haplotypes per bubble, bubbles closer
   than k = 31 bp combined; covers ordered pairs of panel mosaics that switch
   only between bubbles;
-* vg call: candidate traversals per top-level snarl, genotyped independently
-  (no phase between snarls).
 
 Definitions and proxies: see the docstring of diploidgraph/external.py.
 """

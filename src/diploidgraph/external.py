@@ -1,8 +1,8 @@
-"""State-space sizes of two external genotyping models, computed from the same GFA.
+"""State-space size of the PanGenie model, computed from the same GFA.
 
-This module does not run PanGenie or vg call. It counts, on the input graph and
-its haplotype walks, the objects that each model's genotyping step works with,
-as described in the methods papers:
+This module does not run PanGenie. It counts, on the input graph and its
+haplotype walks, the hidden states of PanGenie's genotyping HMM, as described
+in the methods paper:
 
 * PanGenie (Ebler et al., Nat. Genet. 54:518-525, 2022, Methods, "Hidden states
   and transitions"): for each bubble v and N given haplotype paths, the hidden
@@ -13,11 +13,6 @@ as described in the methods papers:
   transitions), so a decoded diploid genome is an ordered pair of mosaics of
   the panel haplotypes that switch only between bubbles.
 
-* vg call (Hickey et al., Genome Biol. 21:35, 2020, Methods, "SV genotyping
-  algorithm"): each top-level snarl is genotyped on its own from a set of
-  candidate traversals; the two most supported traversals give the genotype.
-  No state links one snarl to the next.
-
 Proxies used here (state them in the paper):
 
 * Top-level bubbles. In a two-terminal DAG, a vertex lies on every
@@ -25,13 +20,12 @@ Proxies used here (state them in the paper):
   order (every vertex is assumed to lie on some source-to-sink path). These
   "chain vertices" c_0 = s, ..., c_m = t cut the graph into consecutive
   intervals; an interval with at least one interior vertex is a top-level
-  bubble. They play the role of PanGenie's bubbles and vg's top-level snarls.
+  bubble. They play the role of PanGenie's bubbles.
 * Panel haplotypes. The P/W walks that run from the source to the sink, except
   the reference genomes (samples GRCh38 and CHM13 by default): PanGenie's panel
-  consists of the assembly haplotypes. vg call candidates are counted from all
-  complete walks, the references included.
+  consists of the assembly haplotypes.
 * Alleles of a bubble. The distinct sub-walks of the panel haplotypes through it
-  (what PanGenie's bubble VCF and a haplotype-based traversal finder would list).
+  (what PanGenie's bubble VCF would list).
   A bubble with a single allele carries no variation among the panel
   haplotypes and is not a PanGenie bubble.
 """
@@ -217,14 +211,6 @@ def external_sizes(path: str, k: int = 31, reference_samples: Sequence[str] = RE
         "log10_st_paths": log10_int(n_paths),
         "log10_ours_covered_ordered_pairs": 2 * log10_int(n_paths),
     }
-
-    # vg call: independent per top-level snarl; candidates = haplotype traversals
-    out.update(
-        vgcall_sites=len(bubbles),
-        vgcall_candidate_traversals=sum(a),
-        vgcall_unordered_genotypes=sum(x * (x + 1) // 2 for x in a),
-        log10_vgcall_unphased_genotype_vectors=sum(math.log10(x * (x + 1) // 2) for x in a),
-    )
 
     # PanGenie: N^2 ordered states per (combined) bubble; panel = complete walks
     # of the assembly haplotypes (reference samples excluded)

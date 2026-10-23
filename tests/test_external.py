@@ -51,7 +51,6 @@ def test_far_apart_bubbles_stay_separate(tmp_path):
     # mosaics switch between the bubbles: 2 * 2 haplotypes, i.e. all 4 s-t paths
     assert r["log10_pangenie_covered_ordered_pairs"] == pytest.approx(2 * math.log10(4))
     assert r["log10_ours_covered_ordered_pairs"] == pytest.approx(2 * math.log10(4))
-    assert r["vgcall_candidate_traversals"] == 4 and r["vgcall_unordered_genotypes"] == 6
 
 
 def test_close_bubbles_are_combined(tmp_path):
@@ -105,7 +104,7 @@ def test_reference_samples_left_out_of_pangenie_panel(tmp_path):
     p = tmp_path / "ref.gfa"
     p.write_text("\n".join(lines) + "\n")
     r = external_sizes(str(p))
-    assert r["n_complete_walks"] == 3 and r["vgcall_candidate_traversals"] == 2
+    assert r["n_complete_walks"] == 3
     assert r["pangenie_panel_haplotypes"] == 2 and r["pangenie_states"] == 4
     r_all = external_sizes(str(p), reference_samples=())
     assert r_all["pangenie_panel_haplotypes"] == 3 and r_all["pangenie_states"] == 9

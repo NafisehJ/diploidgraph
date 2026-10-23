@@ -58,7 +58,6 @@ vertex orders; edges, time and memory in the GFA vertex order, single run.
 | Ordered pairs of source-to-sink paths represented | about 10^570 | about 10^71057 |
 | PanGenie model, counted on the same graph: bubbles (k = 31) / hidden states M x N^2 (N = panel haplotypes) | 545 / 115,823,945 (N = 461) | 38,829 / 8,216,216,400 (N = 460) |
 | PanGenie model: ordered pairs it can decode (mosaics of the panel haplotypes) | about 10^436 | about 10^34183 |
-| vg call model, counted on the same graph: top-level sites / candidate traversals (no phase between sites) | 792 / 1,940 | 85,388 / 193,211 |
 | Sampled pairs decoded exactly once: observed haplotypes; random-successor paths | 1000/1000; 1000/1000 | 100/100; 100/100 |
 | Whole-graph check (weighted walk count = N^2) | passed (exact) | passed (modulo two primes) |
 | Added vertices used by pairs of complete observed haplotypes: P-node part / core / all | 100.00% / 100.00% / 100.00% | 99.84% / 99.88% / 99.86% |
@@ -78,17 +77,16 @@ How to read the comparisons:
   pairs, in the same unit, so the difference is the saving due to the
   decomposition.
   It is not an external method.
-* **PanGenie and vg call** rows are counts on the same graph, not runs of the
-  tools (`experiments/external_state_space.py`, section 8 of
+* **PanGenie** rows are counts on the same graph, not runs of the
+  tool (`experiments/external_state_space.py`, section 8 of
   `experiments/README.md`). PanGenie (Ebler et al. 2022) has N^2 hidden states
   per bubble, one per ordered pair of the N panel haplotypes: the complete
   assembly walks, without the GRCh38 and CHM13 reference walks (N = 461 for
   BRCA1, 460 for MHC; identical haplotypes are kept, as in a PanGenie panel).
   It decodes only pairs of mosaics of the panel
-  haplotypes that switch between bubbles. vg call (Hickey et al. 2020)
-  genotypes each top-level snarl on its own, here from the haplotype traversals.
-  States and diploid-graph vertices are different units, so the rows show what
-  each method covers next to its size, not a ratio.
+  haplotypes that switch between bubbles. Hidden states and diploid-graph
+  vertices are different units, so the rows show what each covers next to its
+  size, not a ratio.
 * **Naive pairing** stores one chain of paired positions for every ordered pair of
   distinct observed haplotype walks. It is not in the same unit as the diploid graph: one
   diploid vertex can stand for many haplotype pairs, while one naive position
@@ -121,7 +119,7 @@ The script downloads the two HPRC graphs, converts them to GFA with
 [vg](https://github.com/vgteam/vg) (only needed once), builds and verifies the
 diploid graphs, sizes both graphs over 21 vertex orders, decodes sampled
 haplotype pairs, measures which added vertices are used by the observed
-haplotypes, counts the PanGenie and vg call state spaces on the same graph,
+haplotypes, counts the PanGenie state space on the same graph,
 and writes the results table (`experiments/results/results_table.md`, the same
 rows as above) and the figure. Sizes are reproduced
 exactly; times and memory depend on the machine. If the GFA files already exist, point to them with
@@ -217,7 +215,7 @@ See [experiments/README.md](experiments/README.md) for:
 * the no-decomposition ablation (`no_decomposition.py`) and vertex-order
   sensitivity of both graphs (`order_sensitivity.py`);
 * per-pair decoding of sampled haplotype pairs (`pair_check.py`);
-* state-space sizes of PanGenie and vg call on the same graph
+* state-space size of the PanGenie model on the same graph
   (`external_state_space.py`);
 * which added vertices are used by observed haplotype pairs
   (`observed_support.py`, `explain_unsupported.py`);

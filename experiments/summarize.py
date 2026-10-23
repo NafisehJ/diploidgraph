@@ -120,8 +120,6 @@ def main() -> None:
                       f"(N = {j['external']['pangenie_panel_haplotypes']})"),
         row("PanGenie model: ordered pairs it can decode (mosaics of the panel haplotypes)",
             lambda j: f"about 10^{j['external']['log10_pangenie_covered_ordered_pairs']:.0f}"),
-        row("vg call model, counted on the same graph: top-level sites / candidate traversals (no phase between sites)",
-            lambda j: f"{n(j['external']['vgcall_sites'])} / {n(j['external']['vgcall_candidate_traversals'])}"),
         row("Sampled pairs decoded exactly once: observed haplotypes; random-successor paths",
             lambda j: f"{j['pairs']['observed']['decoded_exactly_once']}/{j['pairs']['observed']['pairs']}; "
                       f"{j['pairs']['random']['decoded_exactly_once']}/{j['pairs']['random']['pairs']}"),

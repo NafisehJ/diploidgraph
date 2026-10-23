@@ -52,7 +52,7 @@ for L in $LOCI; do
   step "$L: diploid graph and ablation sizes over ${ORDERS:-20} random vertex orders"
   python "$ROOT/experiments/order_sensitivity.py" "$GFA" --orders "${ORDERS:-20}" --json "$OUT/${L}_order.json" > /dev/null
 
-  step "$L: state-space sizes of PanGenie and vg call on the same graph (size only)"
+  step "$L: state-space size of the PanGenie model on the same graph (size only)"
   python "$ROOT/experiments/external_state_space.py" "$GFA" --out "$OUT/${L}_external.csv" > /dev/null
 
   step "$L: which added vertices are used by observed haplotypes"
