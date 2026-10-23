@@ -5,19 +5,23 @@
 Compact **diploid sequence graphs** from two-terminal DAG sequence graphs.
 
 A haploid sequence graph encodes haplotypes as source-to-sink paths. A diploid
-sequence graph encodes **ordered pairs of haplotypes** as walks. Pairing
-haplotypes naively grows quadratically in the number of haplotypes and
-exponentially in the number of variant sites. `diploidgraph` keeps homozygous
-regions as a single copy of the input graph and adds vertices only where two
-haplotypes can differ: at parallel structures (P-nodes) of a series-parallel
-decomposition and, for graphs that are not series-parallel, inside the small
-irreducible core that contains their W-motifs.
+sequence graph encodes **ordered pairs of haplotypes** as walks: every pair of
+source-to-sink paths, including recombinant pairs that no sample carries.
+`diploidgraph` keeps homozygous regions as a single copy of the input graph and
+adds vertices only where two haplotypes can differ: one vertex per ordered pair
+of branches at each parallel structure (P-node) of a series-parallel
+decomposition, and, for graphs that are not series-parallel, pair states inside
+the irreducible core that contains their W-motifs.
 
-On real HPRC v2.0 pangenome loci:
+On two HPRC v2.0 pangenome loci (BRCA1 and MHC):
 
-* **Compact:** about **43,000x** (BRCA1) and **52,000x** (MHC) fewer nodes than naive pairing of the observed haplotypes.
-* **Complete:** every pair of haplotypes in the graph is represented, including all recombinant pairs, and this is verified.
-* **No wasted nodes:** every added node is used by real haplotypes.
+* **Compact:** 2.3x (BRCA1) and 3.1x (MHC) fewer vertices than the product-graph
+  baseline, which represents exactly the same haplotype pairs without the
+  decomposition. Pairing the observed haplotypes one by one would need about
+  4 x 10^4 to 5 x 10^4 times more vertices (different units; see below).
+* **Exact:** every ordered pair of haplotypes is represented exactly once, checked
+  by brute force on small graphs, pair by pair on sampled real haplotype pairs,
+  and by a whole-graph path count.
 * **Fast:** 0.03 s for BRCA1 and under 10 s for MHC on a laptop.
 
 <img src="experiments/figures/real_loci.png" width="100%">
@@ -29,32 +33,52 @@ Diploid Local Ancestry Inference.* bioRxiv 2025.
 ## Results on real pangenome loci
 
 HPRC v2.0 Minigraph-Cactus subgraphs (GRCh38-based, `ec1M`). Both inputs are
-two-terminal DAGs with no preprocessing. Measured on a laptop (WSL Ubuntu 22.04,
-aarch64, 8 GB RAM), single run.
+two-terminal DAGs with no preprocessing: no link or haplotype walk was dropped.
+Measured on a laptop (WSL Ubuntu 22.04, aarch64, 8 GB RAM), single run.
 
 | | BRCA1 | MHC |
 |---|---|---|
 | Input vertices / edges | 2,704 / 3,828 | 349,475 / 482,220 |
-| Haplotype walks (distinct; source-to-sink) | 465 (455; 463) | 466 (466; 462) |
+| Haplotype walks: all / distinct source-to-sink | 465 / 453 | 466 / 462 |
+| Dropped links / walks with mixed orientation | 0 / 0 | 0 / 0 |
 | P-nodes (max branches) | 982 (3) | 114,540 (4) |
 | Non-series-parallel core: vertices / edges | 203 / 340 | 28,664 / 45,545 |
-| Diploid graph vertices / edges | 8,250 / 12,592 | 887,929 / 1,361,520 |
+| **Diploid graph vertices / edges** | **8,250 / 12,592** | **887,929 / 1,361,520** |
 | Diploid vertices per input vertex | 3.05 | 2.54 |
-| Naive pairing of observed walks, paired vertices | 354,168,814 | 46,485,747,514 |
-| Ordered pairs of all source-to-sink paths represented | about 10^570 | about 10^71057 |
+| Product-graph baseline vertices / edges (same pairs) | 19,342 / pending | 2,709,299 / 3,352,592 |
+| Naive pairing of observed walks, paired positions | 354,168,814 | 46,485,747,514 |
+| Ordered pairs of source-to-sink paths represented | about 10^570 | about 10^71057 |
+| Diploid vertices over 21 vertex orders (min / median / max) | 7,678 / 8,158 / 8,842 | pending |
+| Sampled pairs decoded exactly once (observed; random) | 100/100; 100/100 | pending |
+| Whole-graph check (weighted walk count = N^2) | passed (exact) | passed (modulo two large primes) |
 | Added vertices used by pairs of complete observed haplotypes | 100% | 99.86% |
-| Added vertices used by any observed haplotype (incl. partial walks) | 100% | 100% |
 | Decompose + build time | 0.03 s | 9.6 s |
 | Peak memory (whole process) | 27 MB | 1.2 GB |
-| Exactness check (weighted walk count = N^2) | passed (exact) | passed (modulo two large primes) |
 
-Naive pairing builds one chain of paired vertices for every ordered pair of
-distinct observed walks, as long as the longer walk of the pair; "paired
-vertices" is the total size of these chains, in the same unit as the diploid
-graph's vertices. Reading the MHC GFA takes about 50 s in pure Python and is not
-included in the build time. The 0.14% of MHC vertices not used by complete
-haplotype pairs are used by the 4 haplotype walks that cover the region only
-partly.
+How to read the comparisons:
+
+* **Product-graph baseline** is the like-for-like comparison: it applies the same
+  pair-state construction to every vertex of the input instead of only to the
+  core. It represents exactly the same pairs, and its size is counted in the same
+  unit. The difference is the saving due to the decomposition; it is larger where
+  bubbles are nested or have long branches.
+* **Naive pairing** stores one chain of paired positions for every ordered pair of
+  distinct observed walks. It is not in the same unit as the diploid graph: one
+  diploid vertex can stand for many haplotype pairs, while one naive position
+  stands for one position of one pair. It mainly shows how the cost of listing
+  pairs grows with the number of haplotypes.
+* **Vertex order.** The P-node part does not depend on the vertex order. In the
+  core, the haplotype that is earlier in a fixed topological order moves first,
+  so the core part depends on the order; the table gives the range over the GFA
+  order and 20 random orders.
+* **Observed haplotypes.** On a Minigraph-Cactus graph every bubble branch is
+  used by some input haplotype, so the P-node part is fully used by construction;
+  the figure is informative for the core only. The 0.14% of MHC vertices not used
+  by complete haplotype pairs are used by the 4 walks that cover the region only
+  partly.
+
+Reading the MHC GFA takes about 50 s in pure Python and is not included in the
+build time.
 
 ## Reproduce the results
 
