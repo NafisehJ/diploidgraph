@@ -15,16 +15,16 @@ the irreducible core that contains their W-motifs.
 
 On two HPRC v2.0 pangenome loci (BRCA1 and MHC):
 
-* **Compact:** in the GFA vertex order, 2.3x (BRCA1) and 3.1x (MHC) fewer
-  vertices than a product-graph ablation, which represents exactly the same
-  haplotype pairs with the decomposition turned off. Pairing the observed
+* **Compact:** 2.3x (BRCA1) and 3.0x (MHC) fewer vertices than a product-graph
+  ablation, which represents exactly the same haplotype pairs with the
+  decomposition turned off (median over 21 vertex orders). Pairing the observed
   haplotypes one by one would need about 4 x 10^4 to 5 x 10^4 times more
   vertices (different units; see below).
 * **Exact:** the paper proves that every ordered pair of source-to-sink paths is
   represented by exactly one walk. The code checks this by brute force on small
   graphs and, on real loci, with a whole-graph count and on sampled haplotype
   pairs (evidence, not a proof).
-* **Fast:** 0.03 s for BRCA1 and under 10 s for MHC on a laptop.
+* **Fast:** 0.04 s for BRCA1 and under 10 s for MHC on a laptop.
 
 <img src="experiments/figures/real_loci.png" width="100%">
 
@@ -45,20 +45,27 @@ Measured on a laptop (WSL Ubuntu 22.04, aarch64, 8 GB RAM), single run.
 | Dropped links / walks with mixed orientation | 0 / 0 | 0 / 0 |
 | P-nodes (max branches) | 982 (3) | 114,540 (4) |
 | Non-series-parallel core: vertices / edges | 203 / 340 | 28,664 / 45,545 |
-| **Diploid graph vertices / edges** (GFA order) | **8,250 / 12,592** | **887,929 / 1,361,520** |
+| **Diploid graph vertices / edges** (GFA vertex order) | **8,250 / 12,592** | **887,929 / 1,361,520** |
 | Diploid vertices per input vertex | 3.05 | 2.54 |
-| Product-graph ablation vertices (same pairs, GFA order) | 19,342 | 2,709,299 |
-| Naive pairing of observed walks, paired positions | 354,168,814 | 46,485,747,514 |
+| Diploid vertices over 21 vertex orders: min / median / max | 7,678 / 8,158 / 8,842 | 874,039 / 877,565 / 887,929 |
+| Product-graph ablation vertices over the same orders: min / median / max | 17,882 / 18,916 / 20,746 | 2,574,811 / 2,626,487 / 2,709,299 |
+| Product ablation / diploid graph, median over orders | 2.3x | 3.0x |
+| Naive pairing of distinct complete haplotypes, paired positions | 351,071,710 | 45,696,235,174 |
 | Ordered pairs of source-to-sink paths represented | about 10^570 | about 10^71057 |
-| Whole-graph check (weighted walk count = N^2) | passed (exact) | passed (modulo two large primes) |
-| Added vertices used by pairs of complete observed haplotypes (all kinds) | 100% | 99.86% |
-| Decompose + build time | 0.03 s | 9.6 s |
-| Peak memory (whole process) | 27 MB | 1.2 GB |
+| Sampled pairs decoded exactly once: observed haplotypes; random-successor paths | 100/100; 100/100 | 100/100; 100/100 |
+| Whole-graph check (weighted walk count = N^2) | passed (exact) | passed (modulo two primes) |
+| Added vertices used by pairs of complete observed haplotypes: all / core only | 100.00% / 100.00% | 99.86% / 99.88% |
+| Decompose + build time | 0.04 s | 9.76 s |
+| Peak memory (whole process) | 27 MB | 1,204 MB |
 
 How to read the comparisons:
 
 * **Product-graph ablation** applies our own pair-state construction to every
-  vertex of the input instead of only to the core. It represents exactly the
+  vertex of the input instead of only to the core: the part of the Cartesian
+  product of G with itself reachable from (s, s) when only the haplotype that is
+  earlier in a fixed topological order moves (both move together while they are
+  at the same vertex). The plain Cartesian product represents each pair by many
+  walks, and the tensor product misses pairs of paths of different lengths. It represents exactly the
   same pairs, in the same unit, so the difference is the saving due to the
   decomposition; it is larger where bubbles are nested or have long branches.
   It is an ablation, not an external method; a comparison with the state spaces
@@ -70,16 +77,16 @@ How to read the comparisons:
   pairs grows with the number of haplotypes.
 * **Vertex order.** The P-node part does not depend on the vertex order. In the
   core, the haplotype that is earlier in a fixed topological order moves first,
-  so the core part depends on the order, and so does the product ablation. On
-  BRCA1, our graph has 7,678 / 8,158 / 8,842 vertices (min / median / max) over
-  the GFA order and 20 random orders; the GFA order (8,250) is slightly above the
-  median. `reproduce.sh` reports both ranges and the median ratio.
+  so the core part depends on the order, and so does the product ablation. The
+  table gives both ranges over the GFA order and 20 random orders, and the ratio
+  of the medians. The spread of our graph is 15% (BRCA1) and 1.6% (MHC) of its
+  minimum.
 * **Observed haplotypes.** On a Minigraph-Cactus graph every bubble branch is
   used by some input haplotype, so the P-node part is fully used by construction;
   the figure is informative for the core only. The 0.14% of MHC vertices not used
   by complete haplotype pairs are used by the 4 walks that cover the region only
-  partly. `reproduce.sh` also reports the core-only fraction (fork, pair and step
-  vertices).
+  partly. The core-only fraction (fork, pair and step vertices) is 100% (BRCA1)
+  and 99.88% (MHC).
 
 Reading the MHC GFA takes about 50 s in pure Python and is not included in the
 build time.
