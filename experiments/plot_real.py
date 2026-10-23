@@ -52,8 +52,8 @@ def main() -> None:
 
     width, gap = 0.2, 0.02
     series = [("Input pangenome graph (haploid)", "input_nodes", INPUT),
-              ("Our diploid graph (with decomposition)", "diploid_nodes", OURS),
-              ("Cartesian product with a fixed order of moves (no decomposition)", "no_decomposition_nodes", PRODUCT),
+              ("Our diploid graph", "diploid_nodes", OURS),
+              ("Cartesian product (with a fixed order of moves)", "no_decomposition_nodes", PRODUCT),
               ("Naive pairing of observed haplotypes", "naive_observed_nodes", NAIVE)]
     offset = (len(series) - 1) / 2
     for k, (label, key, color) in enumerate(series):
@@ -94,10 +94,10 @@ def main() -> None:
     ax.legend(loc="upper left", frameon=False, fontsize=10, bbox_to_anchor=(0.0, 1.0))
     times = ", ".join(f"{data[l]['build_s']:.2g} s ({l})" for l in loci)
     fig.text(0.075, 0.03,
-             f"Blue and green: middle value of {data[loci[0]].get('orders', 'several')} runs (size changes slightly with node order). "
+             f"Blue and green: middle value of {data[loci[0]].get('orders', 'several')} runs (size changes slightly with node order).\n"
              f"Build time on a laptop (8 GB RAM): {times}.",
-             ha="left", fontsize=9.5, color=INK2)
-    fig.subplots_adjust(left=0.075, right=0.98, top=0.87, bottom=0.15)
+             ha="left", fontsize=9.5, color=INK2, linespacing=1.4)
+    fig.subplots_adjust(left=0.075, right=0.98, top=0.87, bottom=0.17)
     fig.savefig(args.out, dpi=200, facecolor=SURFACE)
     print(f"wrote {args.out}")
 
