@@ -32,7 +32,7 @@ def main() -> None:
     if not found:
         raise SystemExit(f"no *_stats.json files in {out}")
     loci = [l for l in ORDER if l in found] + sorted(l for l in found if l not in ORDER)
-    J = {l: {k: load(out / f"{l}_{k}.json") for k in ("stats", "product", "pairs", "order", "unsupported")}
+    J = {l: {k: load(out / f"{l}_{k}.json") for k in ("stats", "pairs", "order", "unsupported")}
          for l in loci}
 
     def row(label, f):
@@ -49,6 +49,10 @@ def main() -> None:
         sup = sum(u[k]["supported_full"] for k in ("fork", "pair", "step"))
         tot = sum(u[k]["total"] for k in ("fork", "pair", "step"))
         return f"{100 * sup / tot:.2f}%" if tot else "no core"
+
+    def pnode_support(j):
+        h = j["unsupported"]["het"]
+        return f"{100 * h['supported_full'] / h['total']:.2f}%" if h["total"] else "no P-nodes"
 
     def all_support(j):
         a = j["unsupported"]["all_new"]
@@ -94,8 +98,8 @@ def main() -> None:
         row("Whole-graph check (weighted walk count = N^2)",
             lambda j: ("passed" if j["stats"]["exactness_passed"] else "FAILED")
             + (" (exact)" if j["stats"]["exactness_check"] == "exact" else " (modulo two primes)")),
-        row("Added vertices used by pairs of complete observed haplotypes: all / core only",
-            lambda j: f"{all_support(j)} / {core_support(j)}"),
+        row("Added vertices used by pairs of complete observed haplotypes: P-node part / core / all",
+            lambda j: f"{pnode_support(j)} / {core_support(j)} / {all_support(j)}"),
         row("Decompose + build time", lambda j: f"{j['stats']['time_decompose_s'] + j['stats']['time_build_s']:.2f} s"),
         row("Peak memory (whole process)", lambda j: f"{j['stats']['peak_rss_mb']:,.0f} MB"),
     ]
@@ -110,7 +114,7 @@ def main() -> None:
             fig[l] = {
                 "input_nodes": j["stats"]["n_vertices"],
                 "diploid_nodes": j["order"]["vertices_min_median_max"][1],
-                "product_nodes": j["order"]["product_vertices_min_median_max"][1],
+                "no_decomposition_nodes": j["order"]["product_vertices_min_median_max"][1],
                 "naive_observed_nodes": j["stats"]["naive_ordered_observed_nodes"],
                 "haplotypes": j["stats"]["n_distinct_full_haplotype_walks"],
                 "build_s": j["stats"]["time_decompose_s"] + j["stats"]["time_build_s"],

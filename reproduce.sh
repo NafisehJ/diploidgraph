@@ -44,7 +44,7 @@ for L in $LOCI; do
   python -m diploidgraph.cli "$GFA" --json "$OUT/${L}_stats.json" > /dev/null
 
   step "$L: ablation without decomposition (same pairs)"
-  python "$ROOT/experiments/product_baseline.py" "$GFA" --json "$OUT/${L}_product.json" > /dev/null
+  python "$ROOT/experiments/no_decomposition.py" "$GFA" --json "$OUT/${L}_nodecomp.json" > /dev/null
 
   step "$L: check sampled haplotype pairs one by one (each must be decoded exactly once)"
   python "$ROOT/experiments/pair_check.py" "$GFA" --pairs "${PAIRS:-100}" --json "$OUT/${L}_pairs.json" > /dev/null

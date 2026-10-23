@@ -7,7 +7,7 @@ The baseline applies the pair-state construction to every vertex of the input
 non-series-parallel core and handles bubbles with P-node vertices. The difference
 is the saving due to the decomposition.
 
-    python experiments/product_baseline.py BRCA1.gfa --json brca1_product.json
+    python experiments/no_decomposition.py BRCA1.gfa --json brca1_nodecomp.json
 """
 
 from __future__ import annotations
@@ -40,12 +40,12 @@ def main() -> None:
         "input_vertices": g.num_vertices(),
         "diploid_vertices": ours["vertices"],
         "diploid_edges": ours["edges"],
-        "product_vertices": base["vertices"],
-        "product_edges": base["edges"],
-        "product_is_lower_bound": base["capped"],
-        "product_over_diploid": base["vertices"] / ours["vertices"],
+        "no_decomposition_vertices": base["vertices"],
+        "no_decomposition_edges": base["edges"],
+        "no_decomposition_is_lower_bound": base["capped"],
+        "no_decomposition_over_diploid": base["vertices"] / ours["vertices"],
         "time_diploid_s": t1 - t0,
-        "time_product_s": t2 - t1,
+        "time_no_decomposition_s": t2 - t1,
     }
     text = json.dumps(out, indent=2)
     print(text)

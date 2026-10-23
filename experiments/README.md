@@ -99,7 +99,7 @@ external method. Its size also depends on the vertex order, so
 median ratio.
 
 ```bash
-python experiments/product_baseline.py BRCA1.gfa --json brca1_product.json
+python experiments/no_decomposition.py BRCA1.gfa --json brca1_nodecomp.json
 ```
 
 ## Everything at once

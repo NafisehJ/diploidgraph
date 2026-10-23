@@ -3,7 +3,7 @@
   "BRCA1": {
     "input_nodes": 2704,
     "diploid_nodes": 8158,
-    "product_nodes": 18916,
+    "no_decomposition_nodes": 18916,
     "naive_observed_nodes": 351071710,
     "haplotypes": 453,
     "build_s": 0.040293334999660146,
@@ -13,7 +13,7 @@
   "MHC": {
     "input_nodes": 349475,
     "diploid_nodes": 877565,
-    "product_nodes": 2626487,
+    "no_decomposition_nodes": 2626487,
     "naive_observed_nodes": 45696235174,
     "haplotypes": 462,
     "build_s": 9.757265365000421,

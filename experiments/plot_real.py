@@ -41,6 +41,9 @@ def main() -> None:
     ap.add_argument("--out", default="experiments/figures/real_loci.png")
     args = ap.parse_args()
     data = json.load(open(args.json))
+    for v in data.values():  # older files used "product_nodes"
+        if isinstance(v, dict) and "product_nodes" in v:
+            v.setdefault("no_decomposition_nodes", v.pop("product_nodes"))
     loci = [l for l in ("BRCA1", "MHC") if l in data] or [k for k in data if isinstance(data[k], dict)]
 
     plt.rcParams.update({"font.family": "DejaVu Sans", "font.size": 11})
@@ -50,7 +53,7 @@ def main() -> None:
     width, gap = 0.2, 0.02
     series = [("Input pangenome graph", "input_nodes", INPUT),
               ("Our diploid graph", "diploid_nodes", OURS),
-              ("Same construction without decomposition (same pairs)", "product_nodes", PRODUCT),
+              ("Same construction without decomposition (same pairs)", "no_decomposition_nodes", PRODUCT),
               ("Naive pairing of observed haplotypes (paired positions)", "naive_observed_nodes", NAIVE)]
     offset = (len(series) - 1) / 2
     for k, (label, key, color) in enumerate(series):
@@ -62,9 +65,9 @@ def main() -> None:
 
     for i, l in enumerate(loci):
         d = data[l]
-        ratio = d.get("ratio_median", d["product_nodes"] / d["diploid_nodes"])
+        ratio = d.get("ratio_median", d["no_decomposition_nodes"] / d["diploid_nodes"])
         x = i + (1 - offset) * (width + gap)  # our bar
-        ax.text(x, d["product_nodes"] * 12, f"{ratio:.1f}\u00d7 fewer than\nwithout decomposition", ha="center", va="bottom",
+        ax.text(x, d["no_decomposition_nodes"] * 12, f"{ratio:.1f}\u00d7 fewer than\nwithout decomposition", ha="center", va="bottom",
                 fontsize=11, fontweight="bold", color=OURS, zorder=5, linespacing=1.15)
 
     ax.set_yscale("log")

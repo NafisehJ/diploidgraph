@@ -197,7 +197,7 @@ def trivial_decomposition(g: SequenceGraph) -> Decomposition:
     """A decomposition with no series or parallel reductions: the whole graph is one
     irreducible core whose edges are the edges of G.
 
-    Feeding it to build_diploid / diploid_size gives the *product-graph baseline*:
+    Feeding it to build_diploid / diploid_size gives the *no-decomposition ablation*:
     the same pair-state construction applied to every vertex of G instead of only
     to the non-series-parallel core. It represents exactly the same haplotype pairs.
     """

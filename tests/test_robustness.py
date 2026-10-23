@@ -99,8 +99,8 @@ def test_gfa_blank_lines_and_walks_off_graph(tmp_path):
 
 
 @pytest.mark.parametrize("seed", range(30))
-def test_product_baseline_is_exact_and_not_smaller(seed):
-    """The product-graph baseline represents the same pairs (exactly once each)."""
+def test_no_decomposition_is_exact_and_not_smaller(seed):
+    """The no-decomposition ablation represents the same pairs (exactly once each)."""
     from diploidgraph.decompose import trivial_decomposition
     rng = random.Random(seed)
     g = random_dag(n_ops=7, extra_edges=seed % 3, seed=seed) if seed % 2 else \

@@ -20,8 +20,10 @@ On two HPRC v2.0 pangenome loci (BRCA1 and MHC):
   same haplotype pairs (median over 21 vertex orders). Pairing the observed
   haplotypes one by one would need about 4 x 10^4 to 5 x 10^4 times more
   vertices (different units; see below).
-* **Exact:** the paper proves that every ordered pair of source-to-sink paths is
-  represented by exactly one walk. The code checks this by brute force on small
+* **Exact:** every ordered pair of source-to-sink paths is represented by
+  exactly one walk; the proof, including the non-series-parallel core
+  construction, is in the revised manuscript (in preparation; the core
+  construction is new since the bioRxiv 2025 version). The code checks this by brute force on small
   graphs and, on real loci, with a whole-graph count and on sampled haplotype
   pairs (evidence, not a proof).
 * **Fast:** 0.04 s for BRCA1 and under 10 s for MHC on a laptop.
@@ -36,7 +38,8 @@ Diploid Local Ancestry Inference.* bioRxiv 2025.
 
 HPRC v2.0 Minigraph-Cactus subgraphs (GRCh38-based, `ec1M`). Both inputs are
 two-terminal DAGs with no preprocessing: no link or haplotype walk was dropped.
-Measured on a laptop (WSL Ubuntu 22.04, aarch64, 8 GB RAM), single run.
+Measured on a laptop (WSL Ubuntu 22.04, aarch64, 8 GB RAM). Sizes over 21
+vertex orders; edges, time and memory in the GFA vertex order, single run.
 
 | | BRCA1 | MHC |
 |---|---|---|
@@ -54,7 +57,7 @@ Measured on a laptop (WSL Ubuntu 22.04, aarch64, 8 GB RAM), single run.
 | Ordered pairs of source-to-sink paths represented | about 10^570 | about 10^71057 |
 | Sampled pairs decoded exactly once: observed haplotypes; random-successor paths | 100/100; 100/100 | 100/100; 100/100 |
 | Whole-graph check (weighted walk count = N^2) | passed (exact) | passed (modulo two primes) |
-| Added vertices used by pairs of complete observed haplotypes: all / core only | 100.00% / 100.00% | 99.86% / 99.88% |
+| Added vertices used by pairs of complete observed haplotypes: P-node part / core / all | 100.00% / 100.00% / 100.00% | 99.84% / 99.88% / 99.86% |
 | Decompose + build time | 0.04 s | 9.76 s |
 | Peak memory (whole process) | 27 MB | 1,204 MB |
 
@@ -69,7 +72,7 @@ How to read the comparisons:
   Cartesian product represents each pair by many walks, and the tensor product
   misses pairs of paths of different lengths.) It represents exactly the same
   pairs, in the same unit, so the difference is the saving due to the
-  decomposition; it is larger where bubbles are nested or have long branches.
+  decomposition.
   It is not an external method; a comparison with the state spaces of external
   genotypers is in progress.
 * **Naive pairing** stores one chain of paired positions for every ordered pair of
@@ -84,11 +87,11 @@ How to read the comparisons:
   of the medians. The spread of our graph is 15% (BRCA1) and 1.6% (MHC) of its
   minimum.
 * **Observed haplotypes.** On a Minigraph-Cactus graph every bubble branch is
-  used by some input haplotype, so the P-node part is fully used by construction;
-  the figure is informative for the core only. The 0.14% of MHC vertices not used
-  by complete haplotype pairs are used by the 4 walks that cover the region only
-  partly. The core-only fraction (fork, pair and step vertices) is 100% (BRCA1)
-  and 99.88% (MHC).
+  used by some input haplotype, so most P-node vertices are used by observed
+  pairs almost by construction; the core fraction is the more informative one.
+  At MHC, 370 P-node vertices and 366 core vertices (736 in all, 0.14%) are not
+  used by pairs of complete haplotypes; every one of them is used by one of the
+  4 walks that cover the region only partly (`explain_unsupported.py`).
 
 Reading the MHC GFA takes about 50 s in pure Python and is not included in the
 build time.
@@ -196,7 +199,7 @@ See [experiments/README.md](experiments/README.md) for:
 
 * runtime, peak memory and diploid graph size on real gene/locus-level
   pangenome subgraphs (`real_graphs.py`, `summarize.py`, `plot_real.py`);
-* the no-decomposition ablation (`product_baseline.py`) and vertex-order
+* the no-decomposition ablation (`no_decomposition.py`) and vertex-order
   sensitivity of both graphs (`order_sensitivity.py`);
 * per-pair decoding of sampled haplotype pairs (`pair_check.py`);
 * which added vertices are used by observed haplotype pairs
