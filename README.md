@@ -21,9 +21,9 @@ On two HPRC v2.0 pangenome loci (BRCA1 and MHC):
   haplotypes one by one would need about 4 x 10^4 to 5 x 10^4 times more
   vertices (different units; see below).
 * **Exact:** every ordered pair of source-to-sink paths is represented by
-  exactly one walk; the proof, including the non-series-parallel core
-  construction, is in the revised manuscript (in preparation; the core
-  construction is new since the bioRxiv 2025 version). The code checks this by brute force on small
+  exactly one walk. The proof, including the construction for the
+  non-series-parallel core (new since the bioRxiv 2025 version), is in the
+  revised manuscript (in preparation). The code checks this by brute force on small
   graphs and, on real loci, with a whole-graph count and on sampled haplotype
   pairs (evidence, not a proof).
 * **Fast:** 0.04 s for BRCA1 and under 10 s for MHC on a laptop.
