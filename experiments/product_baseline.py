@@ -1,4 +1,4 @@
-"""Compare the diploid graph with the product-graph baseline.
+"""Compare the diploid graph with the same construction without decomposition (ablation).
 
 Both represent exactly the same set of haplotype pairs (every ordered pair of
 source-to-sink paths, each once) and both are counted in vertices of a graph.

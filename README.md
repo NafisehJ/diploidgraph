@@ -15,9 +15,9 @@ the irreducible core that contains their W-motifs.
 
 On two HPRC v2.0 pangenome loci (BRCA1 and MHC):
 
-* **Compact:** 2.3x (BRCA1) and 3.0x (MHC) fewer vertices than a product-graph
-  ablation, which represents exactly the same haplotype pairs with the
-  decomposition turned off (median over 21 vertex orders). Pairing the observed
+* **Compact:** 2.3x (BRCA1) and 3.0x (MHC) fewer vertices than the same
+  pair-state construction without decomposition, which represents exactly the
+  same haplotype pairs (median over 21 vertex orders). Pairing the observed
   haplotypes one by one would need about 4 x 10^4 to 5 x 10^4 times more
   vertices (different units; see below).
 * **Exact:** the paper proves that every ordered pair of source-to-sink paths is
@@ -45,11 +45,11 @@ Measured on a laptop (WSL Ubuntu 22.04, aarch64, 8 GB RAM), single run.
 | Dropped links / walks with mixed orientation | 0 / 0 | 0 / 0 |
 | P-nodes (max branches) | 982 (3) | 114,540 (4) |
 | Non-series-parallel core: vertices / edges | 203 / 340 | 28,664 / 45,545 |
-| **Diploid graph vertices / edges** (GFA vertex order) | **8,250 / 12,592** | **887,929 / 1,361,520** |
-| Diploid vertices per input vertex | 3.05 | 2.54 |
-| Diploid vertices over 21 vertex orders: min / median / max | 7,678 / 8,158 / 8,842 | 874,039 / 877,565 / 887,929 |
-| Product-graph ablation vertices over the same orders: min / median / max | 17,882 / 18,916 / 20,746 | 2,574,811 / 2,626,487 / 2,709,299 |
-| Product ablation / diploid graph, median over orders | 2.3x | 3.0x |
+| **Diploid graph vertices, median over 21 vertex orders** (min to max) | **8,158** (7,678 to 8,842) | **877,565** (874,039 to 887,929) |
+| Diploid graph vertices / edges in the GFA vertex order | 8,250 / 12,592 | 887,929 / 1,361,520 |
+| Diploid vertices per input vertex (median) | 3.02 | 2.51 |
+| No decomposition: vertices, median over the same orders (min to max) | 18,916 (17,882 to 20,746) | 2,626,487 (2,574,811 to 2,709,299) |
+| No decomposition / diploid graph, ratio of medians | 2.3x | 3.0x |
 | Naive pairing of distinct complete haplotypes, paired positions | 351,071,710 | 45,696,235,174 |
 | Ordered pairs of source-to-sink paths represented | about 10^570 | about 10^71057 |
 | Sampled pairs decoded exactly once: observed haplotypes; random-successor paths | 100/100; 100/100 | 100/100; 100/100 |
@@ -60,16 +60,18 @@ Measured on a laptop (WSL Ubuntu 22.04, aarch64, 8 GB RAM), single run.
 
 How to read the comparisons:
 
-* **Product-graph ablation** applies our own pair-state construction to every
-  vertex of the input instead of only to the core: the part of the Cartesian
-  product of G with itself reachable from (s, s) when only the haplotype that is
-  earlier in a fixed topological order moves (both move together while they are
-  at the same vertex). The plain Cartesian product represents each pair by many
-  walks, and the tensor product misses pairs of paths of different lengths. It represents exactly the
-  same pairs, in the same unit, so the difference is the saving due to the
+* **No decomposition** is an ablation: our own pair-state construction applied
+  to the whole input instead of only to the non-series-parallel core. While the
+  two haplotypes are at the same vertex, both advance one edge (along the same
+  edge or along two different edges); otherwise only the one that is earlier in
+  a fixed topological order advances. This is the part of a product of G with
+  itself reachable from (s, s) with one fixed interleaving of moves. (The plain
+  Cartesian product represents each pair by many walks, and the tensor product
+  misses pairs of paths of different lengths.) It represents exactly the same
+  pairs, in the same unit, so the difference is the saving due to the
   decomposition; it is larger where bubbles are nested or have long branches.
-  It is an ablation, not an external method; a comparison with the state spaces
-  of external genotypers is in progress.
+  It is not an external method; a comparison with the state spaces of external
+  genotypers is in progress.
 * **Naive pairing** stores one chain of paired positions for every ordered pair of
   distinct observed haplotype walks. It is not in the same unit as the diploid graph: one
   diploid vertex can stand for many haplotype pairs, while one naive position
@@ -77,7 +79,7 @@ How to read the comparisons:
   pairs grows with the number of haplotypes.
 * **Vertex order.** The P-node part does not depend on the vertex order. In the
   core, the haplotype that is earlier in a fixed topological order moves first,
-  so the core part depends on the order, and so does the product ablation. The
+  so the core part depends on the order, and so does the ablation. The
   table gives both ranges over the GFA order and 20 random orders, and the ratio
   of the medians. The spread of our graph is 15% (BRCA1) and 1.6% (MHC) of its
   minimum.
@@ -100,7 +102,7 @@ bash reproduce.sh --quick   # BRCA1 only (under a minute)
 
 The script downloads the two HPRC graphs, converts them to GFA with
 [vg](https://github.com/vgteam/vg) (only needed once), builds and verifies the
-diploid graphs, sizes the product ablation over 21 vertex orders, decodes sampled
+diploid graphs, sizes both graphs over 21 vertex orders, decodes sampled
 haplotype pairs, measures which added vertices are used by the observed
 haplotypes, and writes the results table (`results/results_table.md`, in the
 same form as above, with the extra rows) and the figure. Sizes are reproduced
@@ -178,7 +180,7 @@ one walk, and nothing else is decoded.
 The test suite (`tests/`) checks exactness by brute force on random
 series-parallel and non-series-parallel graphs, and by the weighted count on
 large graphs. `tests/test_robustness.py` adds dense random DAGs in shuffled
-vertex orders, deletion branches, the product ablation, determinism of sizes,
+vertex orders, deletion branches, the no-decomposition ablation, determinism of sizes,
 and a swapped-pair construction that passes the count but fails the per-pair
 check. Tests run on every push (see badge).
 
@@ -194,7 +196,7 @@ See [experiments/README.md](experiments/README.md) for:
 
 * runtime, peak memory and diploid graph size on real gene/locus-level
   pangenome subgraphs (`real_graphs.py`, `summarize.py`, `plot_real.py`);
-* the product-graph ablation (`product_baseline.py`) and vertex-order
+* the no-decomposition ablation (`product_baseline.py`) and vertex-order
   sensitivity of both graphs (`order_sensitivity.py`);
 * per-pair decoding of sampled haplotype pairs (`pair_check.py`);
 * which added vertices are used by observed haplotype pairs

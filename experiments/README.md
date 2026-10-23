@@ -88,7 +88,7 @@ python experiments/order_sensitivity.py BRCA1.gfa --orders 20 --json brca1_order
   pair of core vertices. It shows why the construction does not add one vertex per
   disjoint path pair: on BRCA1 it stops after more than 2,000,000 core paths.
 
-## 7. Product-graph ablation
+## 7. Ablation: no decomposition
 
 An ablation of our own method: the same pair-state construction applied to
 every vertex of the input, without the series-parallel decomposition. It

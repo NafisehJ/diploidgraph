@@ -1,6 +1,6 @@
 """How much does the diploid graph size depend on the vertex order?
 
-Both our graph and the product-graph ablation are sized for every order, so the
+Both our graph and the ablation without decomposition are sized for every order, so the
 two can be compared like with like.
 
 In the non-series-parallel core the haplotype that is earlier in a fixed

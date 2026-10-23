@@ -54,6 +54,14 @@ def main() -> None:
         a = j["unsupported"]["all_new"]
         return f"{100 * a['supported_full'] / a['total']:.2f}%"
 
+    first_order = next((J[l]["order"] for l in loci if J[l]["order"]), None)
+    n_orders = first_order["orders"] if first_order else "several"
+
+    def med(mmm, bold=False):
+        lo, mid, hi = mmm
+        m = f"**{n(mid)}**" if bold else n(mid)
+        return f"{m} ({n(lo)} to {n(hi)})"
+
     rows = [
         "| | " + " | ".join(loci) + " |",
         "|---|" + "---|" * len(loci),
@@ -65,16 +73,16 @@ def main() -> None:
         row("P-nodes (max branches)", lambda j: f"{n(j['stats']['n_pnodes'])} ({j['stats']['max_pnode_branches']})"),
         row("Non-series-parallel core: vertices / edges",
             lambda j: f"{n(j['stats']['core_vertices'])} / {n(j['stats']['core_edges'])}"),
-        row("**Diploid graph vertices / edges** (GFA vertex order)",
-            lambda j: f"**{n(j['stats']['diploid_vertices'])} / {n(j['stats']['diploid_edges'])}**"),
-        row("Diploid vertices per input vertex",
-            lambda j: f"{j['stats']['diploid_vertices'] / j['stats']['n_vertices']:.2f}"),
-        row(f"Diploid vertices over {J[loci[0]]['order']['orders'] if J[loci[0]]['order'] else 'several'} vertex orders: min / median / max",
-            lambda j: " / ".join(n(x) for x in j["order"]["vertices_min_median_max"])),
-        row("Product-graph ablation vertices over the same orders: min / median / max",
-            lambda j: " / ".join(n(x) for x in j["order"]["product_vertices_min_median_max"])
+        row(f"**Diploid graph vertices, median over {n_orders} vertex orders** (min to max)",
+            lambda j: med(j["order"]["vertices_min_median_max"], bold=True)),
+        row("Diploid graph vertices / edges in the GFA vertex order",
+            lambda j: f"{n(j['stats']['diploid_vertices'])} / {n(j['stats']['diploid_edges'])}"),
+        row("Diploid vertices per input vertex (median)",
+            lambda j: f"{j['order']['vertices_min_median_max'][1] / j['stats']['n_vertices']:.2f}"),
+        row("No decomposition: vertices, median over the same orders (min to max)",
+            lambda j: med(j["order"]["product_vertices_min_median_max"])
             + (" (lower bound)" if j["order"]["product_any_capped"] else "")),
-        row("Product ablation / diploid graph, median over orders",
+        row("No decomposition / diploid graph, ratio of medians",
             lambda j: f"{j['order']['median_ratio_product_over_ours']:.1f}x"),
         row("Naive pairing of distinct complete haplotypes, paired positions",
             lambda j: n(j["stats"]["naive_ordered_observed_nodes"])),
@@ -101,12 +109,13 @@ def main() -> None:
         try:
             fig[l] = {
                 "input_nodes": j["stats"]["n_vertices"],
-                "diploid_nodes": j["stats"]["diploid_vertices"],
-                "product_nodes": j["product"]["product_vertices"],
+                "diploid_nodes": j["order"]["vertices_min_median_max"][1],
+                "product_nodes": j["order"]["product_vertices_min_median_max"][1],
                 "naive_observed_nodes": j["stats"]["naive_ordered_observed_nodes"],
                 "haplotypes": j["stats"]["n_distinct_full_haplotype_walks"],
                 "build_s": j["stats"]["time_decompose_s"] + j["stats"]["time_build_s"],
                 "ratio_median": j["order"]["median_ratio_product_over_ours"],
+                "orders": j["order"]["orders"],
             }
         except (KeyError, TypeError):
             pass
