@@ -1,6 +1,6 @@
 # diploidgraph
 
-[![tests](https://github.com/NafisehJ/spqr-diploid-genotyper/actions/workflows/tests.yml/badge.svg)](https://github.com/NafisehJ/spqr-diploid-genotyper/actions/workflows/tests.yml)
+[![tests](https://github.com/NafisehJ/diploidgraph/actions/workflows/tests.yml/badge.svg)](https://github.com/NafisehJ/diploidgraph/actions/workflows/tests.yml)
 
 Compact **diploid sequence graphs** from two-terminal DAG sequence graphs.
 
@@ -33,6 +33,7 @@ On two HPRC v2.0 pangenome loci (BRCA1 and MHC):
 Paper: N. Jafarzadeh, J. M. Eizenga, B. Paten. *An Efficient Graph Algorithm for
 Diploid Local Ancestry Inference.* bioRxiv 2025.
 [doi:10.1101/2025.07.05.662656](https://doi.org/10.1101/2025.07.05.662656)
+This repository was previously named `spqr-diploid-genotyper`; old links redirect here.
 
 ## Results on real pangenome loci
 
@@ -115,8 +116,8 @@ exactly; times and memory depend on the machine. If the GFA files already exist,
 ## Install
 
 ```bash
-git clone https://github.com/NafisehJ/spqr-diploid-genotyper.git
-cd spqr-diploid-genotyper
+git clone https://github.com/NafisehJ/diploidgraph.git
+cd diploidgraph
 python -m pip install -e ".[test]"
 python -m pytest
 ```
