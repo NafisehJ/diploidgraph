@@ -55,7 +55,7 @@ vertex orders; edges, time and memory in the GFA vertex order, single run.
 | No decomposition / diploid graph, ratio of medians | 2.3x | 3.0x |
 | Naive pairing of distinct complete haplotypes, paired positions | 351,071,710 | 45,696,235,174 |
 | Ordered pairs of source-to-sink paths represented | about 10^570 | about 10^71057 |
-| Sampled pairs decoded exactly once: observed haplotypes; random-successor paths | 100/100; 100/100 | 100/100; 100/100 |
+| Sampled pairs decoded exactly once: observed haplotypes; random-successor paths | 1000/1000; 1000/1000 | 100/100; 100/100 |
 | Whole-graph check (weighted walk count = N^2) | passed (exact) | passed (modulo two primes) |
 | Added vertices used by pairs of complete observed haplotypes: P-node part / core / all | 100.00% / 100.00% / 100.00% | 99.84% / 99.88% / 99.86% |
 | Decompose + build time | 0.04 s | 9.76 s |
