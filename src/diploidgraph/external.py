@@ -26,7 +26,10 @@ Proxies used here (state them in the paper):
   "chain vertices" c_0 = s, ..., c_m = t cut the graph into consecutive
   intervals; an interval with at least one interior vertex is a top-level
   bubble. They play the role of PanGenie's bubbles and vg's top-level snarls.
-* Panel haplotypes. The P/W walks that run from the source to the sink.
+* Panel haplotypes. The P/W walks that run from the source to the sink, except
+  the reference genomes (samples GRCh38 and CHM13 by default): PanGenie's panel
+  consists of the assembly haplotypes. vg call candidates are counted from all
+  complete walks, the references included.
 * Alleles of a bubble. The distinct sub-walks of the panel haplotypes through it
   (what PanGenie's bubble VCF and a haplotype-based traversal finder would list).
   A bubble with a single allele carries no variation among the panel
@@ -107,8 +110,10 @@ def _digest(parts: Sequence[str]) -> bytes:
     return hashlib.blake2b("\t".join(parts).encode(), digest_size=16).digest()
 
 
-def allele_table(path: str, g: SequenceGraph, chain: Sequence[Vertex], bubbles: Sequence[Bubble]) -> AlleleTable:
-    """Stream the GFA walks once; keep only complete (source-to-sink) walks."""
+def allele_table(path: str, g: SequenceGraph, chain: Sequence[Vertex], bubbles: Sequence[Bubble],
+                 exclude_samples: Sequence[str] = ()) -> AlleleTable:
+    """Stream the GFA walks once; keep only complete (source-to-sink) walks,
+    skipping walks of the samples in exclude_samples."""
     s, t = chain[0], chain[-1]
     cidx = {v: i for i, v in enumerate(chain)}
     by_start = {b.start_idx: k for k, b in enumerate(bubbles)}
@@ -119,7 +124,7 @@ def allele_table(path: str, g: SequenceGraph, chain: Sequence[Vertex], bubbles: 
     chain_bp: Optional[List[int]] = None
     chain_len = [len(g.seq[v]) for v in chain] if has_seq else None
 
-    for walk in iter_gfa_walks(path):
+    for walk in iter_gfa_walks(path, exclude_samples):
         if walk[0] != s or walk[-1] != t:
             continue
         walk_digests.add(_digest([str(v) for v in walk]))
@@ -181,7 +186,10 @@ def _distinct_rows(rows: List[List[int]], cols: List[int]) -> int:
     return len({tuple(r[c] for c in cols) for r in rows})
 
 
-def external_sizes(path: str, k: int = 31) -> Dict[str, object]:
+REFERENCE_SAMPLES = ("GRCh38", "CHM13")
+
+
+def external_sizes(path: str, k: int = 31, reference_samples: Sequence[str] = REFERENCE_SAMPLES) -> Dict[str, object]:
     """All counts for one GFA, as a flat dict (see module docstring)."""
     data = read_gfa(path)
     g = data.graph
@@ -218,9 +226,16 @@ def external_sizes(path: str, k: int = 31) -> Dict[str, object]:
         log10_vgcall_unphased_genotype_vectors=sum(math.log10(x * (x + 1) // 2) for x in a),
     )
 
-    # PanGenie: N^2 ordered states per (combined) bubble
+    # PanGenie: N^2 ordered states per (combined) bubble; panel = complete walks
+    # of the assembly haplotypes (reference samples excluded)
+    tab = allele_table(path, g, chain, bubbles, exclude_samples=reference_samples) if reference_samples else tab
     groups = pangenie_groups(tab, k)
-    N, Nd = n_walks, tab.n_distinct_walks
+    N, Nd = len(tab.alleles), tab.n_distinct_walks
+    out.update(
+        pangenie_reference_samples_excluded=",".join(reference_samples),
+        pangenie_panel_haplotypes=N,
+        pangenie_panel_distinct_haplotypes=Nd,
+    )
     if groups is None:
         out.update(pangenie_k=k, pangenie_bubbles=None, pangenie_note="no segment sequences; bubbles not combined")
         return out

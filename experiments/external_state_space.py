@@ -32,6 +32,8 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("gfa", nargs="+")
     ap.add_argument("-k", type=int, default=31, help="PanGenie k-mer size used to combine nearby bubbles (default 31)")
+    ap.add_argument("--reference-samples", default="GRCh38,CHM13",
+                    help="samples left out of the PanGenie panel (comma-separated; empty string keeps all)")
     ap.add_argument("--out", default="experiments/results/external.csv")
     args = ap.parse_args()
 
@@ -41,7 +43,8 @@ def main() -> None:
     for path in args.gfa:
         t0 = time.perf_counter()
         try:
-            r = external_sizes(path, k=args.k)
+            refs = tuple(x for x in args.reference_samples.split(",") if x)
+            r = external_sizes(path, k=args.k, reference_samples=refs)
         except ValueError as err:  # e.g. a GFA without complete haplotype walks
             r = {"input": path, "error": str(err)}
         r["time_s"] = time.perf_counter() - t0

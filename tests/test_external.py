@@ -94,3 +94,18 @@ def test_coverage_bounds_on_random_graphs(tmp_path, seed):
     assert r["n_distinct_complete_walks"] == n_distinct
     assert r["log10_pangenie_covered_ordered_pairs"] <= r["log10_ours_covered_ordered_pairs"] + 1e-9
     assert r["log10_pangenie_covered_ordered_pairs"] >= 2 * math.log10(n_distinct) - 1e-9
+
+
+def test_reference_samples_left_out_of_pangenie_panel(tmp_path):
+    # one SNP; two assembly haplotypes (a1, a2) and a reference walk (a1)
+    segs = [("s", "A" * 40), ("a1", "C"), ("a2", "G"), ("t", "A" * 40)]
+    links = [("s", "a1"), ("s", "a2"), ("a1", "t"), ("a2", "t")]
+    lines = ["H\tVN:Z:1.1"] + [f"S\t{a}\t{b}" for a, b in segs] + [f"L\t{a}\t+\t{b}\t+\t0M" for a, b in links]
+    lines += ["W\tHG1\t1\tchr\t0\t81\t>s>a1>t", "W\tHG1\t2\tchr\t0\t81\t>s>a2>t", "W\tGRCh38\t0\tchr\t0\t81\t>s>a1>t"]
+    p = tmp_path / "ref.gfa"
+    p.write_text("\n".join(lines) + "\n")
+    r = external_sizes(str(p))
+    assert r["n_complete_walks"] == 3 and r["vgcall_candidate_traversals"] == 2
+    assert r["pangenie_panel_haplotypes"] == 2 and r["pangenie_states"] == 4
+    r_all = external_sizes(str(p), reference_samples=())
+    assert r_all["pangenie_panel_haplotypes"] == 3 and r_all["pangenie_states"] == 9

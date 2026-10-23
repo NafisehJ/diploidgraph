@@ -15,7 +15,7 @@ from __future__ import annotations
 import hashlib
 import re
 from dataclasses import dataclass, field
-from typing import Iterator, List, Optional, Tuple
+from typing import Iterable, Iterator, List, Optional, Tuple
 
 from .seqgraph import SequenceGraph
 
@@ -57,14 +57,21 @@ def _orient(steps: List[Tuple[str, bool]]) -> Optional[List[str]]:
     return None
 
 
-def iter_gfa_walks(path: str) -> Iterator[List[str]]:
+def iter_gfa_walks(path: str, exclude_samples: Iterable[str] = ()) -> Iterator[List[str]]:
     """Yield each P/W walk of a GFA file as a forward vertex list, one at a time.
-    Walks that mix orientations are skipped."""
+
+    Walks that mix orientations are skipped. Walks whose sample name (W: the
+    sample field; P: the path name up to the first '#') is in exclude_samples
+    are skipped too.
+    """
+    exclude = set(exclude_samples)
     with open(path) as fh:
         for line in fh:
             if not line or line[0] not in "PW":
                 continue
             f = line.rstrip("\n").split("\t")
+            if exclude and (f[1] if f[0] == "W" else f[1].split("#", 1)[0]) in exclude:
+                continue
             if f[0] == "P":
                 steps = [(x[:-1], x[-1] == "+") for x in f[2].split(",") if x]
             else:
