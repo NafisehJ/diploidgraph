@@ -51,7 +51,7 @@ def main() -> None:
     ax.set_facecolor(SURFACE)
 
     width, gap = 0.2, 0.02
-    series = [("Input pangenome graph", "input_nodes", INPUT),
+    series = [("Input pangenome graph (haploid)", "input_nodes", INPUT),
               ("Our diploid graph (with decomposition)", "diploid_nodes", OURS),
               ("Cartesian product with a fixed order of moves (no decomposition)", "no_decomposition_nodes", PRODUCT),
               ("Naive pairing of observed haplotypes", "naive_observed_nodes", NAIVE)]
@@ -70,7 +70,7 @@ def main() -> None:
         naive_txt = f"{round(naive, -3):,.0f}" if naive >= 1000 else f"{naive:,.0f}"
         x = i + (1 - offset) * (width + gap)  # our bar
         ax.text(x, d["no_decomposition_nodes"] * 12,
-                f"{ratio:.1f}\u00d7 smaller than Cartesian\n{naive_txt}\u00d7 smaller than naive",
+                f"{naive_txt}\u00d7 smaller than naive\n{ratio:.1f}\u00d7 smaller than Cartesian",
                 ha="center", va="bottom", fontsize=10.5, fontweight="bold", color=OURS, zorder=5, linespacing=1.3)
 
     ax.set_yscale("log")
@@ -94,7 +94,7 @@ def main() -> None:
     ax.legend(loc="upper left", frameon=False, fontsize=10, bbox_to_anchor=(0.0, 1.0))
     times = ", ".join(f"{data[l]['build_s']:.2g} s ({l})" for l in loci)
     fig.text(0.075, 0.03,
-             f"Blue and green: median over {data[loci[0]].get('orders', 'several')} vertex orders. "
+             f"Blue and green: median size over {data[loci[0]].get('orders', 'several')} vertex orders. "
              f"Build time on a laptop (8 GB RAM): {times}.",
              ha="left", fontsize=9.5, color=INK2)
     fig.subplots_adjust(left=0.075, right=0.98, top=0.87, bottom=0.15)
