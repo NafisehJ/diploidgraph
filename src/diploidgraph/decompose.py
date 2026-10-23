@@ -142,7 +142,9 @@ def decompose(g: SequenceGraph) -> Decomposition:
                 work.append(x)
 
     remaining = list(edge_node)
-    if len(remaining) == 1 and edge_tail[remaining[0]] == s and edge_head[remaining[0]] == t:
+    if not remaining:  # single-vertex graph: one path of length 0
+        root, is_sp = DecompNode("S", s, t, []), True
+    elif len(remaining) == 1 and edge_tail[remaining[0]] == s and edge_head[remaining[0]] == t:
         root, is_sp = edge_node[remaining[0]], True
     else:
         root = DecompNode("R", s, t, [edge_node[e] for e in sorted(remaining)])

@@ -31,6 +31,8 @@ def main() -> None:
         raise SystemExit(f"no *_stats.json files in {out}")
     stats = {l: load(out / f"{l}_stats.json") for l in loci}
     sup = {l: load(out / f"{l}_unsupported.json") for l in loci}
+    pairs = {l: load(out / f"{l}_pairs.json") for l in loci}
+    order = {l: load(out / f"{l}_order.json") for l in loci}
 
     def row(label, f):
         cells = []
@@ -63,9 +65,22 @@ def main() -> None:
             lambda s, u: pct(u["all_new"]["total"] - u["all_new"]["still_unsupported"], u["all_new"]["total"])),
         row("Decompose + build time (s)", lambda s, u: f"{s['time_decompose_s'] + s['time_build_s']:.2f}"),
         row("Peak memory (MB)", lambda s, u: f"{s['peak_rss_mb']:,.0f}"),
-        row("Exactness check", lambda s, u: f"{fmt(s['exactness_passed'])} ({s['exactness_check']})"),
+        row("Exactness check (weighted count = N^2)", lambda s, u: f"{fmt(s['exactness_passed'])} ({s['exactness_check']})"),
     ]
+    extra = []
+    for l in loci:
+        pr, od = pairs[l], order[l]
+        if pr:
+            extra.append(f"{l}: sampled pairs decoded exactly once: observed {pr['observed']['decoded_exactly_once']}/"
+                         f"{pr['observed']['pairs']}, random {pr['random']['decoded_exactly_once']}/{pr['random']['pairs']}")
+        if od:
+            lo, med, hi = od["vertices_min_median_max"]
+            extra.append(f"{l}: diploid vertices over {od['orders']} vertex orders: GFA order {od['gfa_order_vertices']:,}, "
+                         f"min {lo:,}, median {med:,.0f}, max {hi:,}")
     print("\n".join(rows))
+    if extra:
+        print()
+        print("\n".join(extra))
 
 
 if __name__ == "__main__":

@@ -62,7 +62,7 @@ def iter_gfa_walks(path: str) -> Iterator[List[str]]:
     Walks that mix orientations are skipped."""
     with open(path) as fh:
         for line in fh:
-            if line[0] not in "PW":
+            if not line or line[0] not in "PW":
                 continue
             f = line.rstrip("\n").split("\t")
             if f[0] == "P":
@@ -81,6 +81,8 @@ def read_gfa(path: str, keep_walks: bool = False) -> GFAData:
         for line in fh:
             f = line.rstrip("\n").split("\t")
             tag = f[0]
+            if not tag:
+                continue
             if tag == "S":
                 g.add_vertex(f[1], f[2] if len(f) > 2 and f[2] != "*" else None)
             elif tag == "L":

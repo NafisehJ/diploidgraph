@@ -72,7 +72,7 @@ def run_stats(g: SequenceGraph, n_observed: Optional[int] = None, count_only: bo
         log10_naive_ordered_all_paths=log10_int(naive_pair_count(n_paths, ordered=True)),
     )
     if gd is not None:
-        check = exactness_check(g, gd, n_paths=n_paths)
+        check = exactness_check(g, gd)
         out["exactness_check"] = check["method"]
         out["exactness_passed"] = check["passed"]
     else:

@@ -8,7 +8,7 @@ of the diploid graph, verified by brute force).
 `python examples/run_examples.py --png` (run from the repository root) regenerates
 the figures and the table below in `examples/out/`.
 
-| Example | |V| | s-t paths N | P-nodes | |V(G_D)| | new vertices | naive N(N-1) | exact |
+| Example | \|V\| | s-t paths N | P-nodes | \|V(G_D)\| | new vertices | naive N(N-1) | exact |
 |---|---|---|---|---|---|---|---|
 | 1. One bubble (SNP) | 4 | 2 | 1 | 6 | 2 | 2 | yes |
 | 2. Three alleles | 5 | 3 | 1 | 11 | 6 | 6 | yes |

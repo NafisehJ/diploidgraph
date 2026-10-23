@@ -76,14 +76,14 @@ def test_modular_check_agrees_and_detects_errors():
     exact = weighted_walk_count(gd)
     for p in PRIMES:
         assert weighted_walk_count(gd, p) == exact % p
-    assert exactness_check(g, gd, exact_limit_bits=0)["passed"]
+    assert exactness_check(g, gd, exact_limit_vertices=0)["passed"]
     # remove one heterozygous vertex: both checks must fail
     h = next(v for v in gd.succ if v[0] == "het")
     for outs in gd.succ.values():
         outs.discard(h)
     del gd.succ[h]
     assert not exactness_check(g, gd)["passed"]
-    assert not exactness_check(g, gd, exact_limit_bits=0)["passed"]
+    assert not exactness_check(g, gd, exact_limit_vertices=0)["passed"]
 
 
 def test_example_figures_do_not_depend_on_hash_seed():

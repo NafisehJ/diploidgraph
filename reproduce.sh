@@ -2,7 +2,7 @@
 # Reproduce the results table in README.md (BRCA1 and MHC, HPRC v2.0 Minigraph-Cactus).
 #
 # Usage:
-#   bash reproduce.sh                 # both loci (MHC takes about 15 minutes, 1.5 GB of RAM)
+#   bash reproduce.sh                 # both loci (MHC takes about 30 minutes, 1.5 GB of RAM)
 #   bash reproduce.sh --quick         # BRCA1 only (under a minute)
 #   DATA=~/brca1 bash reproduce.sh    # use a folder that already holds BRCA1.gfa / MHC.gfa
 #
@@ -42,6 +42,12 @@ for L in $LOCI; do
 
   step "$L: build the diploid graph, verify it, measure time and memory"
   python -m diploidgraph.cli "$GFA" --json "$OUT/${L}_stats.json" > /dev/null
+
+  step "$L: check sampled haplotype pairs one by one (each must be decoded exactly once)"
+  python "$ROOT/experiments/pair_check.py" "$GFA" --pairs "${PAIRS:-100}" --json "$OUT/${L}_pairs.json" > /dev/null
+
+  step "$L: diploid graph size over ${ORDERS:-20} random vertex orders"
+  python "$ROOT/experiments/order_sensitivity.py" "$GFA" --orders "${ORDERS:-20}" --json "$OUT/${L}_order.json" > /dev/null
 
   step "$L: which added vertices are used by observed haplotypes"
   python "$ROOT/experiments/explain_unsupported.py" "$GFA" --json "$OUT/${L}_unsupported.json" > /dev/null

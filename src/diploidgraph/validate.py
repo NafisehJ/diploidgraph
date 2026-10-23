@@ -64,23 +64,119 @@ def weighted_walk_count(gd: DiploidGraph, modulus: int | None = None) -> int:
 PRIMES = (2**61 - 1, 2**89 - 1)
 
 
-def exactness_check(g: SequenceGraph, gd: DiploidGraph, n_paths: int | None = None,
-                    exact_limit_bits: int = 8000) -> Dict[str, object]:
-    """Check weighted walk count == N^2 (N = number of source-sink paths of G).
+def exactness_check(g: SequenceGraph, gd: DiploidGraph, exact_limit_vertices: int = 50_000) -> Dict[str, object]:
+    """Necessary condition for exactness: weighted walk count == N^2.
 
-    Exact when N is small; otherwise modulo two Mersenne primes, which keeps one
-    machine-size number per vertex instead of a number with tens of thousands of
-    digits. Pass n_paths (e.g. the decomposition root's count) to avoid
-    recounting paths.
+    N (the number of source-sink paths of G) is counted directly on G, so it does
+    not depend on the decomposition. For graphs with at most exact_limit_vertices
+    vertices the comparison is exact; for larger ones it is done modulo two
+    Mersenne primes, which keeps one machine-size number per vertex.
+
+    This check cannot see a missing pair compensated by a duplicated pair of the
+    same weight; count_decodings checks individual pairs and catches that.
     """
-    if n_paths is None:
-        s, t = g.terminals()
-        n_paths = g.count_paths(s, t)
-    n = n_paths
-    if n.bit_length() <= exact_limit_bits:
+    s, t = g.terminals()
+    if g.num_vertices() <= exact_limit_vertices:
+        n = g.count_paths(s, t)
         return {"method": "exact", "passed": weighted_walk_count(gd) == n * n}
-    ok = all(weighted_walk_count(gd, p) == (n % p) * (n % p) % p for p in PRIMES)
+    ok = True
+    for p in PRIMES:
+        n = g.count_paths_mod(s, t, p)
+        ok = ok and weighted_walk_count(gd, p) == n * n % p
     return {"method": "modulo 2^61-1 and 2^89-1", "passed": ok}
+
+
+class PairDecoder:
+    """Counts the walks of G_D that decode to a given ordered pair (P, Q).
+
+    For an exact G_D every ordered pair of source-sink paths of G gives exactly 1.
+    Unlike the weighted count, this is checked pair by pair, so it detects a
+    missing pair even if another pair is duplicated. Used on sampled pairs of
+    real haplotypes where enumerating all pairs is impossible.
+    """
+
+    def __init__(self, gd: DiploidGraph, dec):
+        self.gd = gd
+        self.order = {v: i for i, v in enumerate(_topo(gd))}
+        self.tin: Dict[int, int] = {}
+        self.tout: Dict[int, int] = {}
+        self.leaf: Dict[Tuple, int] = {}
+        clock = 0
+        stack = [(dec.root, False)]
+        while stack:
+            node, done = stack.pop()
+            if done:
+                self.tout[id(node)] = clock
+                continue
+            self.tin[id(node)] = clock
+            clock += 1
+            if node.kind == "Q":
+                self.leaf[(node.source, node.sink)] = self.tin[id(node)]
+            stack.append((node, True))
+            for c in reversed(node.children):
+                stack.append((c, False))
+
+    def _inside(self, edge, node) -> bool:
+        k = self.leaf.get(edge)
+        return k is not None and self.tin[id(node)] <= k < self.tout[id(node)]
+
+    def _advance(self, path, pos, i, seg):
+        """Index k such that seg.source + path[i+1..k] is a path inside seg.node ending at seg.sink, or None."""
+        if seg is None:
+            return i
+        k = pos.get(seg.sink)
+        if k is None or k <= i:
+            return None
+        prev = seg.source
+        for x in range(i + 1, k + 1):
+            if not self._inside((prev, path[x]), seg.node):
+                return None
+            prev = path[x]
+        return k
+
+    def count(self, P, Q) -> int:
+        import heapq
+        gd = self.gd
+        if P[0] != gd.source[1] or Q[0] != gd.source[1]:
+            return 0
+        posP = {v: i for i, v in enumerate(P)}
+        posQ = {v: i for i, v in enumerate(Q)}
+        start = (gd.source, 0, 0)
+        ways = {start: 1}
+        heap = [(self.order[gd.source], 0, 0, start)]
+        seen = {start}
+        total = 0
+        lastP, lastQ = len(P) - 1, len(Q) - 1
+        while heap:
+            _, _, _, st = heapq.heappop(heap)
+            u, i, j = st
+            w = ways.pop(st)
+            if u == gd.sink and i == lastP and j == lastQ:
+                total += w
+                continue
+            for v in gd.succ[u]:
+                if v in gd.gadget:
+                    gad = gd.gadget[v]
+                    i2 = self._advance(P, posP, i, gad.seg1)
+                    j2 = self._advance(Q, posQ, j, gad.seg2)
+                    if i2 is None or j2 is None:
+                        continue
+                elif u[0] == "hom" and v[0] == "hom":
+                    if i >= lastP or j >= lastQ or P[i + 1] != v[1] or Q[j + 1] != v[1]:
+                        continue
+                    i2, j2 = i + 1, j + 1
+                else:
+                    i2, j2 = i, j
+                nxt = (v, i2, j2)
+                ways[nxt] = ways.get(nxt, 0) + w
+                if nxt not in seen:
+                    seen.add(nxt)
+                    heapq.heappush(heap, (self.order[v], i2, j2, nxt))
+        return total
+
+
+def count_decodings(gd: DiploidGraph, dec, P, Q) -> int:
+    return PairDecoder(gd, dec).count(P, Q)
 
 
 def coverage(g: SequenceGraph, gd: DiploidGraph) -> Tuple[int, int]:

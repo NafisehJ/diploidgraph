@@ -47,7 +47,7 @@ def main() -> None:
     OUT.mkdir(exist_ok=True)
 
     # Het vertices are ordered pairs, so the like-for-like naive count is N(N-1) (ordered).
-    rows = ["| Example | Description | |V| | |E| | s-t paths N | P-nodes | |V(G_D)| | new vertices | naive N(N-1) | exact |",
+    rows = ["| Example | Description | \\|V\\| | \\|E\\| | s-t paths N | P-nodes | \\|V(G_D)\\| | new vertices | naive N(N-1) | exact |",
             "|---|---|---|---|---|---|---|---|---|---|"]
     for name, desc, g in examples():
         s, t = g.terminals()

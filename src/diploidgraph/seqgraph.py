@@ -119,6 +119,17 @@ class SequenceGraph:
                     count[w] += count[u]
         return count[t]
 
+    def count_paths_mod(self, s: Vertex, t: Vertex, modulus: int) -> int:
+        """Number of directed s-t paths modulo `modulus` (machine-size numbers only)."""
+        count: Dict[Vertex, int] = {v: 0 for v in self.succ}
+        count[s] = 1
+        for u in self.topological_order():
+            c = count[u]
+            if c:
+                for w in self.succ[u]:
+                    count[w] = (count[w] + c) % modulus
+        return count[t]
+
     def all_paths(self, s: Vertex, t: Vertex, allowed_edges: Optional[Set[Edge]] = None) -> List[Tuple[Vertex, ...]]:
         """Enumerate all s-t paths. Exponential; for small validation graphs only."""
         out: List[Tuple[Vertex, ...]] = []

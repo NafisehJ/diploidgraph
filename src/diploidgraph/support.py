@@ -90,11 +90,14 @@ def observed_support_with_partial(g: SequenceGraph, walks: Iterable[Sequence[Ver
     used_branches = (defaultdict(set), defaultdict(set))
     blocks = (defaultdict(set), defaultdict(set))  # keyed by the opening cut
     seen: Set[bytes] = set()
-    counts = {"walks": 0, "full": 0, "distinct_full": 0, "distinct_partial": 0}
+    counts = {"walks": 0, "full": 0, "distinct_full": 0, "distinct_partial": 0, "not_in_graph": 0}
 
     for walk in walks:
         counts["walks"] += 1
         if len(walk) < 2:
+            continue
+        if any((a, b) not in leaf for a, b in zip(walk, walk[1:])):
+            counts["not_in_graph"] += 1  # the walk uses an edge the graph does not have
             continue
         is_full = walk[0] == s and walk[-1] == t
         counts["full"] += is_full
