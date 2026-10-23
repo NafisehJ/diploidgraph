@@ -1,6 +1,7 @@
 digraph GD {
   rankdir=LR;
   node [style=filled];
+  edge [fontsize=10, fontcolor="#52514e"];
   n0 [label="(s,s)", shape=ellipse, fillcolor="#cfe3f7"];
   n1 [label="(a,a)", shape=ellipse, fillcolor="#cfe3f7"];
   n2 [label="(b,b)", shape=ellipse, fillcolor="#cfe3f7"];

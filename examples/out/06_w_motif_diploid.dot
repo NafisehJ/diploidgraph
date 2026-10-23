@@ -1,6 +1,7 @@
 digraph GD {
   rankdir=LR;
   node [style=filled];
+  edge [fontsize=10, fontcolor="#52514e"];
   n0 [label="(s,s)", shape=ellipse, fillcolor="#cfe3f7"];
   n1 [label="(a,a)", shape=ellipse, fillcolor="#cfe3f7"];
   n2 [label="(b,b)", shape=ellipse, fillcolor="#cfe3f7"];
@@ -18,12 +19,6 @@ digraph GD {
   n14 [label="[d | t]", shape=diamond, fillcolor="#e3e3e3"];
   n15 [label="(t, d)", shape=box, fillcolor="#b9e4c9"];
   n16 [label="[t | d]", shape=diamond, fillcolor="#e3e3e3"];
-  n17 [label="(d, ·)", shape=box, fillcolor="#b9e4c9"];
-  n18 [label="(t, ·)", shape=box, fillcolor="#b9e4c9"];
-  n19 [label="(·, d)", shape=box, fillcolor="#b9e4c9"];
-  n20 [label="(·, t)", shape=box, fillcolor="#b9e4c9"];
-  n21 [label="(t, ·)", shape=box, fillcolor="#b9e4c9"];
-  n22 [label="(·, t)", shape=box, fillcolor="#b9e4c9"];
   n0 -> n7;
   n0 -> n8;
   n0 -> n1;
@@ -42,19 +37,13 @@ digraph GD {
   n7 -> n3;
   n8 -> n3;
   n9 -> n10;
-  n10 -> n17;
-  n10 -> n18;
+  n10 -> n5 [label="h1 → d"];
+  n10 -> n16 [label="h1 → t"];
   n11 -> n12;
-  n12 -> n19;
-  n12 -> n20;
+  n12 -> n5 [label="h2 → d"];
+  n12 -> n14 [label="h2 → t"];
   n13 -> n14;
-  n14 -> n21;
+  n14 -> n6 [label="h1 → t"];
   n15 -> n16;
-  n16 -> n22;
-  n17 -> n5;
-  n18 -> n16;
-  n19 -> n5;
-  n20 -> n14;
-  n21 -> n6;
-  n22 -> n6;
+  n16 -> n6 [label="h2 → t"];
 }

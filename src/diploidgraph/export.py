@@ -56,15 +56,25 @@ def _seg_label(seg, with_sink: bool) -> str:
     return (inner + str(seg.sink)) if with_sink else (inner or "-")
 
 
-def diploid_graph_dot(gd: DiploidGraph, name: str = "GD") -> str:
+def diploid_graph_dot(gd: DiploidGraph, name: str = "GD", compact_steps: bool = True) -> str:
     """Blue ellipses: homozygous copy (v,v). Orange boxes: P-node pairs of branches.
-    Green boxes: core forks and steps (segments end at the named vertex).
-    Grey diamonds: core pair states [hap1 vertex | hap2 vertex]."""
-    lines = [f"digraph {name} {{", "  rankdir=LR;", "  node [style=filled];"]
+    Green boxes: core forks (the two haplotypes separate). Grey diamonds: core pair
+    states [hap1 vertex | hap2 vertex].
+
+    With compact_steps (default), a step vertex (one haplotype moves along a core
+    edge while the other waits) is drawn as a labelled arrow instead of a box:
+    "h1 → t" means haplotype 1 moves to t.
+    """
+    lines = [f"digraph {name} {{", "  rankdir=LR;", "  node [style=filled];",
+             '  edge [fontsize=10, fontcolor="#52514e"];']
     ids: Dict = {}
+    hidden = set()
     for k, v in enumerate(gd.succ):
         ids[v] = f"n{k}"
         kind = v[0]
+        if kind == "step" and compact_steps:
+            hidden.add(v)
+            continue
         if kind == "hom":
             label, shape, color = f"({v[1]},{v[1]})", "ellipse", HOM_COLOR
         elif kind == "pair":
@@ -76,7 +86,15 @@ def diploid_graph_dot(gd: DiploidGraph, name: str = "GD") -> str:
             shape, color = "box", (HET_COLOR if kind == "het" else CORE_COLOR)
         lines.append(f'  n{k} [label={_q(label)}, shape={shape}, fillcolor="{color}"];')
     for a, outs in gd.succ.items():
+        if a in hidden:
+            continue
         for b in sorted(outs, key=str):  # stable output across runs
-            lines.append(f"  {ids[a]} -> {ids[b]};")
+            if b in hidden:
+                gad = gd.gadget[b]
+                hap, seg = (1, gad.seg1) if gad.seg1 is not None else (2, gad.seg2)
+                (c,) = gd.succ[b]
+                lines.append(f"  {ids[a]} -> {ids[c]} [label={_q(f'h{hap} \u2192 {_seg_label(seg, True)}')}];")
+            else:
+                lines.append(f"  {ids[a]} -> {ids[b]};")
     lines.append("}")
     return "\n".join(lines)

@@ -21,9 +21,10 @@ the figures and the table below in `examples/out/`.
 input: both haplotypes at `v`. Orange boxes `(x, y)` are heterozygous vertices of a
 P-node: haplotype 1 crosses the bubble through branch `x`, haplotype 2 through
 branch `y` (`-` is a direct edge; nested alternatives are written `(b|c)`). In the
-non-series-parallel example, green boxes move one or both haplotypes along a core
-edge to the named vertex (`·` = this haplotype waits), and grey diamonds
-`[u | v]` are pair states: haplotype 1 at `u`, haplotype 2 at `v`.
+non-series-parallel example, a green box `(c, d)` is where the two haplotypes
+separate (haplotype 1 goes to `c`, haplotype 2 to `d`), a grey diamond `[u | v]` is
+a pair state (haplotype 1 at `u`, haplotype 2 at `v`), and an arrow labelled
+`h1 → t` moves haplotype 1 to `t` while haplotype 2 waits, until both meet again.
 
 ## 1. One bubble (SNP)
 
@@ -64,7 +65,8 @@ A larger random example with four nested bubbles.
 
 A bubble `s -> {a, b} -> m`, then a W-motif with diagonal edge `c -> d`. The bubble
 is handled as in example 1; inside the W-motif the two haplotypes are followed with
-pair states until they meet again at `d` or `t`.
+pair states until they meet again at `d` or `t`. The 6 single-haplotype moves are drawn as
+labelled arrows; in the table they are counted as vertices (16 new vertices in total).
 
 <img src="out/06_w_motif_input.png" height="130"><br>
 <img src="out/06_w_motif_diploid.png" width="100%">
