@@ -15,13 +15,15 @@ the irreducible core that contains their W-motifs.
 
 On two HPRC v2.0 pangenome loci (BRCA1 and MHC):
 
-* **Compact:** 2.3x (BRCA1) and 3.1x (MHC) fewer vertices than the product-graph
-  baseline, which represents exactly the same haplotype pairs without the
-  decomposition. Pairing the observed haplotypes one by one would need about
-  4 x 10^4 to 5 x 10^4 times more vertices (different units; see below).
-* **Exact:** every ordered pair of haplotypes is represented exactly once, checked
-  by brute force on small graphs, pair by pair on sampled real haplotype pairs,
-  and by a whole-graph path count.
+* **Compact:** in the GFA vertex order, 2.3x (BRCA1) and 3.1x (MHC) fewer
+  vertices than a product-graph ablation, which represents exactly the same
+  haplotype pairs with the decomposition turned off. Pairing the observed
+  haplotypes one by one would need about 4 x 10^4 to 5 x 10^4 times more
+  vertices (different units; see below).
+* **Exact:** the paper proves that every ordered pair of source-to-sink paths is
+  represented by exactly one walk. The code checks this by brute force on small
+  graphs and, on real loci, with a whole-graph count and on sampled haplotype
+  pairs (evidence, not a proof).
 * **Fast:** 0.03 s for BRCA1 and under 10 s for MHC on a laptop.
 
 <img src="experiments/figures/real_loci.png" width="100%">
@@ -43,39 +45,41 @@ Measured on a laptop (WSL Ubuntu 22.04, aarch64, 8 GB RAM), single run.
 | Dropped links / walks with mixed orientation | 0 / 0 | 0 / 0 |
 | P-nodes (max branches) | 982 (3) | 114,540 (4) |
 | Non-series-parallel core: vertices / edges | 203 / 340 | 28,664 / 45,545 |
-| **Diploid graph vertices / edges** | **8,250 / 12,592** | **887,929 / 1,361,520** |
+| **Diploid graph vertices / edges** (GFA order) | **8,250 / 12,592** | **887,929 / 1,361,520** |
 | Diploid vertices per input vertex | 3.05 | 2.54 |
-| Product-graph baseline vertices / edges (same pairs) | 19,342 / pending | 2,709,299 / 3,352,592 |
+| Product-graph ablation vertices (same pairs, GFA order) | 19,342 | 2,709,299 |
 | Naive pairing of observed walks, paired positions | 354,168,814 | 46,485,747,514 |
 | Ordered pairs of source-to-sink paths represented | about 10^570 | about 10^71057 |
-| Diploid vertices over 21 vertex orders (min / median / max) | 7,678 / 8,158 / 8,842 | pending |
-| Sampled pairs decoded exactly once (observed; random) | 100/100; 100/100 | pending |
 | Whole-graph check (weighted walk count = N^2) | passed (exact) | passed (modulo two large primes) |
-| Added vertices used by pairs of complete observed haplotypes | 100% | 99.86% |
+| Added vertices used by pairs of complete observed haplotypes (all kinds) | 100% | 99.86% |
 | Decompose + build time | 0.03 s | 9.6 s |
 | Peak memory (whole process) | 27 MB | 1.2 GB |
 
 How to read the comparisons:
 
-* **Product-graph baseline** is the like-for-like comparison: it applies the same
-  pair-state construction to every vertex of the input instead of only to the
-  core. It represents exactly the same pairs, and its size is counted in the same
-  unit. The difference is the saving due to the decomposition; it is larger where
-  bubbles are nested or have long branches.
+* **Product-graph ablation** applies our own pair-state construction to every
+  vertex of the input instead of only to the core. It represents exactly the
+  same pairs, in the same unit, so the difference is the saving due to the
+  decomposition; it is larger where bubbles are nested or have long branches.
+  It is an ablation, not an external method; a comparison with the state spaces
+  of external genotypers is in progress.
 * **Naive pairing** stores one chain of paired positions for every ordered pair of
-  distinct observed walks. It is not in the same unit as the diploid graph: one
+  distinct observed haplotype walks. It is not in the same unit as the diploid graph: one
   diploid vertex can stand for many haplotype pairs, while one naive position
   stands for one position of one pair. It mainly shows how the cost of listing
   pairs grows with the number of haplotypes.
 * **Vertex order.** The P-node part does not depend on the vertex order. In the
   core, the haplotype that is earlier in a fixed topological order moves first,
-  so the core part depends on the order; the table gives the range over the GFA
-  order and 20 random orders.
+  so the core part depends on the order, and so does the product ablation. On
+  BRCA1, our graph has 7,678 / 8,158 / 8,842 vertices (min / median / max) over
+  the GFA order and 20 random orders; the GFA order (8,250) is slightly above the
+  median. `reproduce.sh` reports both ranges and the median ratio.
 * **Observed haplotypes.** On a Minigraph-Cactus graph every bubble branch is
   used by some input haplotype, so the P-node part is fully used by construction;
   the figure is informative for the core only. The 0.14% of MHC vertices not used
   by complete haplotype pairs are used by the 4 walks that cover the region only
-  partly.
+  partly. `reproduce.sh` also reports the core-only fraction (fork, pair and step
+  vertices).
 
 Reading the MHC GFA takes about 50 s in pure Python and is not included in the
 build time.
@@ -83,15 +87,17 @@ build time.
 ## Reproduce the results
 
 ```bash
-bash reproduce.sh           # BRCA1 and MHC: download, convert, build, verify, measure (about 15 min)
+bash reproduce.sh           # BRCA1 and MHC: download, convert, build, verify, measure (about 30 min)
 bash reproduce.sh --quick   # BRCA1 only (under a minute)
 ```
 
 The script downloads the two HPRC graphs, converts them to GFA with
 [vg](https://github.com/vgteam/vg) (only needed once), builds and verifies the
-diploid graphs, measures which added vertices are used by the observed
-haplotypes, and prints the table above. Sizes are reproduced exactly; times and
-memory depend on the machine. If the GFA files already exist, point to them with
+diploid graphs, sizes the product ablation over 21 vertex orders, decodes sampled
+haplotype pairs, measures which added vertices are used by the observed
+haplotypes, and writes the results table (`results/results_table.md`, in the
+same form as above, with the extra rows) and the figure. Sizes are reproduced
+exactly; times and memory depend on the machine. If the GFA files already exist, point to them with
 `DATA=/path/to/folder bash reproduce.sh` and vg is not needed.
 
 ## Install
@@ -142,7 +148,8 @@ print(brute_force_check(g, gd)["exact"])           # True
 * **Size.** For series-parallel inputs, `|V(G_D)| = |V| + sum_P k_P (k_P - 1)`
   and `|E(G_D)| = |E| + 2 sum_P k_P (k_P - 1)`. A core with `n_c` vertices adds
   at most `n_c (n_c - 1)` pair states plus forks and steps bounded by core edges
-  times core vertices. Nothing depends on the number of haplotypes.
+  times core vertices; how many of these are created depends on the vertex
+  order. Nothing depends on the number of haplotypes.
 
 ## Correctness checks
 
@@ -153,12 +160,20 @@ one walk, and nothing else is decoded.
 * `validate.brute_force_check` enumerates all pairs and all walks on small
   graphs and reports missing, spurious and duplicated pairs.
 * `validate.weighted_walk_count` is a linear-time count that equals `N^2`
-  (`N` = number of source-to-sink paths) for an exact `G_D`; it is used on large
-  graphs where enumeration is impossible.
+  (`N` = number of source-to-sink paths, counted separately on the input) for an
+  exact `G_D`. It is a necessary condition only; on very large graphs it is
+  computed modulo two large primes.
+* `validate.PairDecoder` decodes one given pair of paths and counts its walks
+  (must be 1). `experiments/pair_check.py` applies it to sampled pairs of
+  observed haplotypes and to random paths; the random paths choose a uniformly
+  random successor at each vertex, which is not uniform over paths.
 
-The test suite checks exactness by brute force on 40 random series-parallel
-graphs and 60 random non-series-parallel graphs, and by the weighted count on
-large graphs of both kinds. Tests run on every push (see badge).
+The test suite (`tests/`) checks exactness by brute force on random
+series-parallel and non-series-parallel graphs, and by the weighted count on
+large graphs. `tests/test_robustness.py` adds dense random DAGs in shuffled
+vertex orders, deletion branches, the product ablation, determinism of sizes,
+and a swapped-pair construction that passes the count but fails the per-pair
+check. Tests run on every push (see badge).
 
 ## Examples
 
@@ -170,8 +185,11 @@ diploid graph figures and an exactness check: [examples/README.md](examples/READ
 
 See [experiments/README.md](experiments/README.md) for:
 
-* runtime, peak memory and diploid graph size vs. naive pairing on real
-  gene/locus-level pangenome subgraphs (`real_graphs.py`, `plot_real.py`);
+* runtime, peak memory and diploid graph size on real gene/locus-level
+  pangenome subgraphs (`real_graphs.py`, `summarize.py`, `plot_real.py`);
+* the product-graph ablation (`product_baseline.py`) and vertex-order
+  sensitivity of both graphs (`order_sensitivity.py`);
+* per-pair decoding of sampled haplotype pairs (`pair_check.py`);
 * which added vertices are used by observed haplotype pairs
   (`observed_support.py`, `explain_unsupported.py`);
 * scaling on random series-parallel graphs (`synthetic_scaling.py`, `plot_synthetic.py`).

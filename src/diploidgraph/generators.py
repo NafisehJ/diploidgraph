@@ -26,7 +26,7 @@ def random_sp_dag(n_ops: int, p_series: float = 0.3, max_branches: int = 3, seed
         edges[i] = edges[-1]
         edges.pop()
         k = 1 if rng.random() < p_series else rng.randint(2, max_branches)
-        if k > 1 and rng.random() < p_deletion:
+        if p_deletion > 0 and k > 1 and rng.random() < p_deletion:
             edges.append((u, v))  # direct edge as one branch
             k -= 1
         for _ in range(k):

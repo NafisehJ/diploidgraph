@@ -1,101 +1,117 @@
-"""Print the README results table from the JSON files written by reproduce.sh.
+"""Build the README results table and the figure data from the JSON files written
+by reproduce.sh.
 
     python experiments/summarize.py experiments/results
+
+Prints the table (the same rows as README.md) and writes
+experiments/results/results_table.md and experiments/results/real_loci.json
+(the input of plot_real.py).
 """
 
 from __future__ import annotations
 
 import json
+import math
 import pathlib
 import sys
+
+ORDER = ["BRCA1", "MHC"]
 
 
 def load(path: pathlib.Path):
     return json.loads(path.read_text()) if path.exists() else None
 
 
-def fmt(x) -> str:
-    if x is None:
-        return "-"
-    if isinstance(x, bool):
-        return "passed" if x else "FAILED"
-    if isinstance(x, float):
-        return f"{x:,.2f}"
-    return f"{x:,}"
+def n(x) -> str:
+    return f"{x:,.0f}"
 
 
 def main() -> None:
     out = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else "experiments/results")
-    loci = sorted(p.name[: -len("_stats.json")] for p in out.glob("*_stats.json"))
-    if not loci:
+    found = [p.name[: -len("_stats.json")] for p in out.glob("*_stats.json")]
+    if not found:
         raise SystemExit(f"no *_stats.json files in {out}")
-    stats = {l: load(out / f"{l}_stats.json") for l in loci}
-    sup = {l: load(out / f"{l}_unsupported.json") for l in loci}
-    pairs = {l: load(out / f"{l}_pairs.json") for l in loci}
-    order = {l: load(out / f"{l}_order.json") for l in loci}
-    prod = {l: load(out / f"{l}_product.json") for l in loci}
+    loci = [l for l in ORDER if l in found] + sorted(l for l in found if l not in ORDER)
+    J = {l: {k: load(out / f"{l}_{k}.json") for k in ("stats", "product", "pairs", "order", "unsupported")}
+         for l in loci}
 
     def row(label, f):
         cells = []
         for l in loci:
             try:
-                cells.append(f(stats[l], sup[l]))
+                cells.append(f(J[l]))
             except (KeyError, TypeError, ZeroDivisionError):
-                cells.append("-")
+                cells.append("not run")
         return f"| {label} | " + " | ".join(cells) + " |"
 
-    def pct(n, d):
-        return f"{100 * n / d:.2f}%"
+    def core_support(j):
+        u = j["unsupported"]
+        sup = sum(u[k]["supported_full"] for k in ("fork", "pair", "step"))
+        tot = sum(u[k]["total"] for k in ("fork", "pair", "step"))
+        return f"{100 * sup / tot:.2f}%" if tot else "no core"
+
+    def all_support(j):
+        a = j["unsupported"]["all_new"]
+        return f"{100 * a['supported_full'] / a['total']:.2f}%"
 
     rows = [
         "| | " + " | ".join(loci) + " |",
         "|---|" + "---|" * len(loci),
-        row("Input vertices / edges", lambda s, u: f"{fmt(s['n_vertices'])} / {fmt(s['n_edges'])}"),
-        row("Haplotype walks (distinct; source-to-sink)", lambda s, u: f"{s['n_haplotype_walks']} "
-            f"({s['n_distinct_haplotype_walks']}; {s['n_full_haplotype_walks']})"),
-        row("P-nodes (max branches)", lambda s, u: f"{fmt(s['n_pnodes'])} ({s['max_pnode_branches']})"),
-        row("Non-series-parallel core: vertices / edges", lambda s, u: f"{fmt(s['core_vertices'])} / {fmt(s['core_edges'])}"),
-        row("Diploid graph vertices / edges", lambda s, u: f"{fmt(s['diploid_vertices'])} / {fmt(s['diploid_edges'])}"),
-        row("Diploid vertices per input vertex", lambda s, u: f"{s['diploid_vertices'] / s['n_vertices']:.2f}"),
-        row("Product-graph baseline vertices (same pairs, no decomposition)",
-            lambda s, u, l=None: "-"),
-        row("Naive pairing of observed walks, paired vertices", lambda s, u: fmt(s["naive_ordered_observed_nodes"])),
-        row("Fewer vertices than naive (x)", lambda s, u: f"{s['naive_ordered_observed_nodes'] / s['diploid_vertices']:,.0f}"),
-        row("log10 of ordered pairs of all source-to-sink paths", lambda s, u: f"{s['log10_naive_ordered_all_paths']:.0f}"),
-        row("Added vertices used by pairs of complete observed haplotypes",
-            lambda s, u: pct(u["all_new"]["supported_full"], u["all_new"]["total"])),
-        row("Added vertices used by any observed haplotype (incl. partial walks)",
-            lambda s, u: pct(u["all_new"]["total"] - u["all_new"]["still_unsupported"], u["all_new"]["total"])),
-        row("Decompose + build time (s)", lambda s, u: f"{s['time_decompose_s'] + s['time_build_s']:.2f}"),
-        row("Peak memory (MB)", lambda s, u: f"{s['peak_rss_mb']:,.0f}"),
-        row("Exactness check (weighted count = N^2)", lambda s, u: f"{fmt(s['exactness_passed'])} ({s['exactness_check']})"),
+        row("Input vertices / edges", lambda j: f"{n(j['stats']['n_vertices'])} / {n(j['stats']['n_edges'])}"),
+        row("Haplotype walks: all / distinct source-to-sink",
+            lambda j: f"{j['stats']['n_haplotype_walks']} / {j['stats']['n_distinct_full_haplotype_walks']}"),
+        row("Dropped links / walks with mixed orientation",
+            lambda j: f"{j['stats']['dropped_links']} / {j['stats']['unoriented_haplotypes']}"),
+        row("P-nodes (max branches)", lambda j: f"{n(j['stats']['n_pnodes'])} ({j['stats']['max_pnode_branches']})"),
+        row("Non-series-parallel core: vertices / edges",
+            lambda j: f"{n(j['stats']['core_vertices'])} / {n(j['stats']['core_edges'])}"),
+        row("**Diploid graph vertices / edges** (GFA vertex order)",
+            lambda j: f"**{n(j['stats']['diploid_vertices'])} / {n(j['stats']['diploid_edges'])}**"),
+        row("Diploid vertices per input vertex",
+            lambda j: f"{j['stats']['diploid_vertices'] / j['stats']['n_vertices']:.2f}"),
+        row(f"Diploid vertices over {J[loci[0]]['order']['orders'] if J[loci[0]]['order'] else 'several'} vertex orders: min / median / max",
+            lambda j: " / ".join(n(x) for x in j["order"]["vertices_min_median_max"])),
+        row("Product-graph ablation vertices over the same orders: min / median / max",
+            lambda j: " / ".join(n(x) for x in j["order"]["product_vertices_min_median_max"])
+            + (" (lower bound)" if j["order"]["product_any_capped"] else "")),
+        row("Product ablation / diploid graph, median over orders",
+            lambda j: f"{j['order']['median_ratio_product_over_ours']:.1f}x"),
+        row("Naive pairing of distinct complete haplotypes, paired positions",
+            lambda j: n(j["stats"]["naive_ordered_observed_nodes"])),
+        row("Ordered pairs of source-to-sink paths represented",
+            lambda j: f"about 10^{j['stats']['log10_st_paths'] * 2:.0f}"),
+        row("Sampled pairs decoded exactly once: observed haplotypes; random-successor paths",
+            lambda j: f"{j['pairs']['observed']['decoded_exactly_once']}/{j['pairs']['observed']['pairs']}; "
+                      f"{j['pairs']['random']['decoded_exactly_once']}/{j['pairs']['random']['pairs']}"),
+        row("Whole-graph check (weighted walk count = N^2)",
+            lambda j: ("passed" if j["stats"]["exactness_passed"] else "FAILED")
+            + (" (exact)" if j["stats"]["exactness_check"] == "exact" else " (modulo two primes)")),
+        row("Added vertices used by pairs of complete observed haplotypes: all / core only",
+            lambda j: f"{all_support(j)} / {core_support(j)}"),
+        row("Decompose + build time", lambda j: f"{j['stats']['time_decompose_s'] + j['stats']['time_build_s']:.2f} s"),
+        row("Peak memory (whole process)", lambda j: f"{j['stats']['peak_rss_mb']:,.0f} MB"),
     ]
-    # fill the baseline row (needs the product JSON, not the stats JSON)
-    for k, r in enumerate(rows):
-        if r.startswith("| Product-graph baseline"):
-            cells = []
-            for l in loci:
-                pr = prod[l]
-                if not pr:
-                    cells.append("-")
-                else:
-                    bound = ">= " if pr["product_is_lower_bound"] else ""
-                    cells.append(f"{bound}{pr['product_vertices']:,} ({pr['product_over_diploid']:,.0f}x ours)")
-            rows[k] = "| Product-graph baseline vertices (same pairs, no decomposition) | " + " | ".join(cells) + " |"
-    extra = []
+    table = "\n".join(rows)
+    print(table)
+    (out / "results_table.md").write_text(table + "\n")
+
+    fig = {"source": "written by experiments/summarize.py from reproduce.sh results"}
     for l in loci:
-        pr, od = pairs[l], order[l]
-        if pr:
-            extra.append(f"{l}: sampled pairs decoded exactly once: observed {pr['observed']['decoded_exactly_once']}/"
-                         f"{pr['observed']['pairs']}, random {pr['random']['decoded_exactly_once']}/{pr['random']['pairs']}")
-        if od:
-            lo, med, hi = od["vertices_min_median_max"]
-            extra.append(f"{l}: diploid vertices over {od['orders']} vertex orders: GFA order {od['gfa_order_vertices']:,}, "
-                         f"min {lo:,}, median {med:,.0f}, max {hi:,}")
-    print("\n".join(rows))
-    if extra:
-        print()
-        print("\n".join(extra))
+        j = J[l]
+        try:
+            fig[l] = {
+                "input_nodes": j["stats"]["n_vertices"],
+                "diploid_nodes": j["stats"]["diploid_vertices"],
+                "product_nodes": j["product"]["product_vertices"],
+                "naive_observed_nodes": j["stats"]["naive_ordered_observed_nodes"],
+                "haplotypes": j["stats"]["n_distinct_full_haplotype_walks"],
+                "build_s": j["stats"]["time_decompose_s"] + j["stats"]["time_build_s"],
+                "ratio_median": j["order"]["median_ratio_product_over_ours"],
+            }
+        except (KeyError, TypeError):
+            pass
+    (out / "real_loci.json").write_text(json.dumps(fig, indent=2) + "\n")
+    print(f"\nwrote {out / 'results_table.md'} and {out / 'real_loci.json'}")
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
-"""Figure: diploid graph size vs naive pairing of observed haplotypes, BRCA1 and MHC.
+"""Figure: diploid graph size vs the product ablation and naive pairing, BRCA1 and MHC.
 
-    python experiments/plot_real.py experiments/figures/real_loci.json --out experiments/figures/real_loci.png
+    python experiments/plot_real.py experiments/results/real_loci.json --out experiments/figures/real_loci.png
 """
 
 from __future__ import annotations
@@ -41,7 +41,7 @@ def main() -> None:
     ap.add_argument("--out", default="experiments/figures/real_loci.png")
     args = ap.parse_args()
     data = json.load(open(args.json))
-    loci = ["BRCA1", "MHC"]
+    loci = [l for l in ("BRCA1", "MHC") if l in data] or [k for k in data if isinstance(data[k], dict)]
 
     plt.rcParams.update({"font.family": "DejaVu Sans", "font.size": 11})
     fig, ax = plt.subplots(figsize=(9, 5.6), facecolor=SURFACE)
@@ -50,7 +50,7 @@ def main() -> None:
     width, gap = 0.2, 0.02
     series = [("Input pangenome graph", "input_nodes", INPUT),
               ("Our diploid graph", "diploid_nodes", OURS),
-              ("Product-graph baseline (same pairs, no decomposition)", "product_nodes", PRODUCT),
+              ("Product-graph ablation (same pairs, no decomposition)", "product_nodes", PRODUCT),
               ("Naive pairing of observed haplotypes (paired positions)", "naive_observed_nodes", NAIVE)]
     offset = (len(series) - 1) / 2
     for k, (label, key, color) in enumerate(series):
@@ -62,9 +62,9 @@ def main() -> None:
 
     for i, l in enumerate(loci):
         d = data[l]
-        ratio = d["product_nodes"] / d["diploid_nodes"]
+        ratio = d.get("ratio_median", d["product_nodes"] / d["diploid_nodes"])
         x = i + (1 - offset) * (width + gap)  # our bar
-        ax.text(x, d["product_nodes"] * 12, f"{ratio:.1f}\u00d7 fewer\nthan product", ha="center", va="bottom",
+        ax.text(x, d["product_nodes"] * 12, f"{ratio:.1f}\u00d7 fewer\nthan product ablation", ha="center", va="bottom",
                 fontsize=11, fontweight="bold", color=OURS, zorder=5, linespacing=1.15)
 
     ax.set_yscale("log")
@@ -84,14 +84,14 @@ def main() -> None:
 
     fig.suptitle("Diploid graph size on real pangenome loci", x=0.075, ha="left", fontsize=15,
                  fontweight="bold", color=INK, y=0.97)
-    fig.text(0.075, 0.885, "HPRC v2.0 Minigraph-Cactus loci. Our graph and the product baseline represent every pair of "
+    fig.text(0.075, 0.885, "HPRC v2.0 Minigraph-Cactus loci. Our graph and the product ablation represent every pair of "
              "haplotypes,\nincluding recombinants; naive pairing lists observed pairs only, in paired positions.",
              ha="left", fontsize=10, color=INK2)
     ax.legend(loc="upper left", frameon=False, fontsize=10, bbox_to_anchor=(0.0, 1.0))
-    b, m = data["BRCA1"], data["MHC"]
+    times = ", ".join(f"{data[l]['build_s']:.2f} s ({l})" for l in loci)
     fig.text(0.075, 0.02,
-             f"Build time: {b['build_s'] * 1000:.0f} ms (BRCA1), {m['build_s']:.1f} s (MHC). "
-             "Our graph verified at both loci: every haplotype pair represented exactly once.", ha="left", fontsize=9.5, color=INK2)
+             f"Build time: {times}. Ratio: median over vertex orders. "
+             "Sampled haplotype pairs each decoded exactly once.", ha="left", fontsize=9.5, color=INK2)
     fig.subplots_adjust(left=0.075, right=0.98, top=0.8, bottom=0.17)
     fig.savefig(args.out, dpi=200, facecolor=SURFACE)
     print(f"wrote {args.out}")

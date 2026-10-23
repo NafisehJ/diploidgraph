@@ -43,13 +43,13 @@ for L in $LOCI; do
   step "$L: build the diploid graph, verify it, measure time and memory"
   python -m diploidgraph.cli "$GFA" --json "$OUT/${L}_stats.json" > /dev/null
 
-  step "$L: product-graph baseline (same pairs, no decomposition)"
+  step "$L: product-graph ablation (same pairs, no decomposition)"
   python "$ROOT/experiments/product_baseline.py" "$GFA" --json "$OUT/${L}_product.json" > /dev/null
 
   step "$L: check sampled haplotype pairs one by one (each must be decoded exactly once)"
   python "$ROOT/experiments/pair_check.py" "$GFA" --pairs "${PAIRS:-100}" --json "$OUT/${L}_pairs.json" > /dev/null
 
-  step "$L: diploid graph size over ${ORDERS:-20} random vertex orders"
+  step "$L: diploid graph and product ablation sizes over ${ORDERS:-20} random vertex orders"
   python "$ROOT/experiments/order_sensitivity.py" "$GFA" --orders "${ORDERS:-20}" --json "$OUT/${L}_order.json" > /dev/null
 
   step "$L: which added vertices are used by observed haplotypes"
@@ -58,3 +58,7 @@ done
 
 step "Results (compare with README.md; times and memory depend on the machine)"
 python "$ROOT/experiments/summarize.py" "$OUT"
+if python -c "import matplotlib" 2>/dev/null; then
+  python "$ROOT/experiments/plot_real.py" "$OUT/real_loci.json" --out "$OUT/real_loci.png" > /dev/null
+  echo "figure: $OUT/real_loci.png"
+fi

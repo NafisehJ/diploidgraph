@@ -88,12 +88,15 @@ python experiments/order_sensitivity.py BRCA1.gfa --orders 20 --json brca1_order
   pair of core vertices. It shows why the construction does not add one vertex per
   disjoint path pair: on BRCA1 it stops after more than 2,000,000 core paths.
 
-## 7. Product-graph baseline
+## 7. Product-graph ablation
 
-The fair like-for-like comparison: the same pair-state construction applied to
+An ablation of our own method: the same pair-state construction applied to
 every vertex of the input, without the series-parallel decomposition. It
 represents exactly the same haplotype pairs (checked in `tests/test_robustness.py`),
-so the size difference is the saving due to the decomposition.
+so the size difference is the saving due to the decomposition. It is not an
+external method. Its size also depends on the vertex order, so
+`order_sensitivity.py` sizes both graphs over the same orders and reports the
+median ratio.
 
 ```bash
 python experiments/product_baseline.py BRCA1.gfa --json brca1_product.json
@@ -102,4 +105,5 @@ python experiments/product_baseline.py BRCA1.gfa --json brca1_product.json
 ## Everything at once
 
 `bash reproduce.sh` (repository root) runs sections 2-5 and 7 for BRCA1 and MHC and
-prints a summary table; `bash reproduce.sh --quick` runs BRCA1 only.
+writes `results_table.md`, `real_loci.json` (figure data) and `real_loci.png`
+with `summarize.py` and `plot_real.py`; `bash reproduce.sh --quick` runs BRCA1 only.

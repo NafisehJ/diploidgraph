@@ -94,16 +94,19 @@ def gfa_stats(path: str, count_only: bool = False) -> Dict[str, object]:
     t0 = time.perf_counter()
     data = read_gfa(path)
     t_read = time.perf_counter() - t0
+    s, t = data.graph.terminals()
     distinct = {}
     for w in data.walks:
-        distinct.setdefault(w.digest, w.length)
+        if w.first == s and w.last == t:  # naive pairing uses complete haplotypes only
+            distinct.setdefault(w.digest, w.length)
     lengths = list(distinct.values())
     out: Dict[str, object] = {
         "input": path,
         "time_read_s": t_read,
         "dropped_links": data.dropped_links,
         "n_haplotype_walks": len(data.walks),
-        "n_distinct_haplotype_walks": len(distinct),
+        "n_distinct_haplotype_walks": len({w.digest for w in data.walks}),
+        "n_distinct_full_haplotype_walks": len(distinct),
         "n_full_haplotype_walks": data.n_full_walks(),
         "unoriented_haplotypes": data.unoriented_haplotypes,
         "walk_length_min_mean_max": [min(lengths), sum(lengths) / len(lengths), max(lengths)] if lengths else None,
