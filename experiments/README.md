@@ -102,8 +102,38 @@ median ratio.
 python experiments/no_decomposition.py BRCA1.gfa --json brca1_nodecomp.json
 ```
 
+## 8. State spaces of external genotypers (size only)
+
+No reads and no genotyping: on the same GFA, this counts what the genotyping
+step of PanGenie and of vg call works with, as described in their methods
+papers, and what each one covers.
+
+* **PanGenie** (Ebler et al. 2022, Methods, "Hidden states and transitions"):
+  one hidden state for every ordered pair (i, j) of the N panel haplotype paths
+  at every bubble, so N^2 states per bubble; bubbles less than k = 31 bp apart
+  are combined. It covers ordered pairs of mosaics of the panel haplotypes that
+  switch only between bubbles; inside a bubble only panel alleles occur.
+* **vg call** (Hickey et al. 2020, Methods, "SV genotyping algorithm"): each
+  top-level snarl is genotyped on its own from candidate traversals (the two
+  best supported give the genotype). No phase is carried between snarls.
+
+Proxies (same graph, same haplotypes as the other sections): bubbles and
+top-level snarls are the intervals between consecutive vertices that lie on
+every source-to-sink path; panel haplotypes are the complete P/W walks; the
+alleles of a bubble are the distinct sub-walks of the panel haplotypes through
+it. PanGenie normally reads a bubble VCF, and vg call may find traversals
+differently, so these are counts on our graph, not measurements of the tools.
+
+```bash
+python experiments/external_state_space.py BRCA1.gfa MHC.gfa --out experiments/results/external.csv
+```
+
+Checked in `tests/test_external.py` (chain vertices against brute force;
+combining of nearby bubbles; PanGenie coverage between the observed pairs and
+all pairs).
+
 ## Everything at once
 
-`bash reproduce.sh` (repository root) runs sections 2-5 and 7 for BRCA1 and MHC and
+`bash reproduce.sh` (repository root) runs sections 2-5, 7 and 8 for BRCA1 and MHC and
 writes `results_table.md`, `real_loci.json` (figure data) and `real_loci.png`
 with `summarize.py` and `plot_real.py`; `bash reproduce.sh --quick` runs BRCA1 only.
