@@ -95,7 +95,7 @@ def main() -> None:
     times = ", ".join(f"{data[l]['build_s']:.2g} s ({l})" for l in loci)
     fig.text(0.075, 0.03,
              f"Blue and green: middle value of {data[loci[0]].get('orders', 'several')} runs (size changes slightly with node order).\n"
-             f"Build time on a laptop (8 GB RAM): {times}.",
+             f"Build time on a laptop (16 GB RAM): {times}.",
              ha="left", fontsize=9.5, color=INK2, linespacing=1.4)
     fig.subplots_adjust(left=0.075, right=0.98, top=0.87, bottom=0.17)
     fig.savefig(args.out, dpi=200, facecolor=SURFACE)

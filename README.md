@@ -39,7 +39,7 @@ This repository was previously named `spqr-diploid-genotyper`; old links redirec
 
 HPRC v2.0 Minigraph-Cactus subgraphs (GRCh38-based, `ec1M`). Both inputs are
 two-terminal DAGs with no preprocessing: no link or haplotype walk was dropped.
-Measured on a laptop (WSL Ubuntu 22.04, aarch64, 8 GB RAM). Sizes over 21
+Measured on a laptop (Snapdragon X, 16 GB RAM; WSL Ubuntu 22.04, aarch64). Sizes over 21
 vertex orders; edges, time and memory in the GFA vertex order, single run.
 
 | | BRCA1 | MHC |
