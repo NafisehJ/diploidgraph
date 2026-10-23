@@ -1,22 +1,23 @@
 {
-  "source": "HPRC v2.0 Minigraph-Cactus (GRCh38, ec1M); measured Oct 22, 2026 with diploidgraph; both graphs fully built and checked",
+  "source": "written by experiments/summarize.py from reproduce.sh results",
   "BRCA1": {
     "input_nodes": 2704,
-    "diploid_nodes": 8250,
-    "naive_observed_nodes": 354168814,
+    "diploid_nodes": 8158,
+    "product_nodes": 18916,
+    "naive_observed_nodes": 351071710,
     "haplotypes": 453,
-    "build_s": 0.034,
-    "supported_fraction": 1.0,
-    "product_nodes": 19342
+    "build_s": 0.040293334999660146,
+    "ratio_median": 2.318705565089483,
+    "orders": 21
   },
   "MHC": {
     "input_nodes": 349475,
-    "diploid_nodes": 887929,
-    "naive_observed_nodes": 46485747514,
+    "diploid_nodes": 877565,
+    "product_nodes": 2626487,
+    "naive_observed_nodes": 45696235174,
     "haplotypes": 462,
-    "build_s": 9.63,
-    "supported_fraction": 0.998633,
-    "product_nodes": 2709299
-  },
-  "note": "haplotypes = distinct source-to-sink walks; sizes from diploidgraph cli, product_baseline.py and stats JSON (Oct 22, 2026)"
+    "build_s": 9.757265365000421,
+    "ratio_median": 2.992925880134235,
+    "orders": 21
+  }
 }
