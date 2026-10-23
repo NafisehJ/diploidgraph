@@ -56,9 +56,9 @@ vertex orders; edges, time and memory in the GFA vertex order, single run.
 | No decomposition / diploid graph, ratio of medians | 2.3x | 3.0x |
 | Naive pairing of distinct complete haplotypes, paired positions | 351,071,710 | 45,696,235,174 |
 | Ordered pairs of source-to-sink paths represented | about 10^570 | about 10^71057 |
-| PanGenie on the same graph: bubbles (k = 31) / hidden states, M x N^2 | 545 / 116,831,105 | 38,844 / 8,291,018,736 |
-| PanGenie: ordered pairs it can decode (mosaics of the panel haplotypes) | about 10^436 | about 10^34198 |
-| vg call on the same graph: top-level sites / candidate traversals (no phase between sites) | 792 / 1,940 | 85,388 / 193,211 |
+| PanGenie model, counted on the same graph: bubbles (k = 31) / hidden states M x N^2 (N = complete walks) | 545 / 116,831,105 (N = 463) | 38,844 / 8,291,018,736 (N = 462) |
+| PanGenie model: ordered pairs it can decode (mosaics of the panel haplotypes) | about 10^436 | about 10^34198 |
+| vg call model, counted on the same graph: top-level sites / candidate traversals (no phase between sites) | 792 / 1,940 | 85,388 / 193,211 |
 | Sampled pairs decoded exactly once: observed haplotypes; random-successor paths | 1000/1000; 1000/1000 | 100/100; 100/100 |
 | Whole-graph check (weighted walk count = N^2) | passed (exact) | passed (modulo two primes) |
 | Added vertices used by pairs of complete observed haplotypes: P-node part / core / all | 100.00% / 100.00% / 100.00% | 99.84% / 99.88% / 99.86% |
@@ -81,8 +81,9 @@ How to read the comparisons:
 * **PanGenie and vg call** rows are counts on the same graph, not runs of the
   tools (`experiments/external_state_space.py`, section 8 of
   `experiments/README.md`). PanGenie (Ebler et al. 2022) has N^2 hidden states
-  per bubble, one per ordered pair of the N complete panel haplotypes (N = 463
-  for BRCA1, 462 for MHC), and decodes only pairs of mosaics of the panel
+  per bubble, one per ordered pair of the N complete panel haplotype walks
+  (N = 463 for BRCA1, 462 for MHC; duplicates included, as PanGenie keeps every
+  panel haplotype), and decodes only pairs of mosaics of the panel
   haplotypes that switch between bubbles. vg call (Hickey et al. 2020)
   genotypes each top-level snarl on its own, here from the haplotype traversals.
   States and diploid-graph vertices are different units, so the rows show what
@@ -112,15 +113,16 @@ build time.
 
 ```bash
 bash reproduce.sh           # BRCA1 and MHC: download, convert, build, verify, measure (about 30 min)
-bash reproduce.sh --quick   # BRCA1 only (under a minute)
+bash reproduce.sh --quick   # BRCA1 only (a few minutes)
 ```
 
 The script downloads the two HPRC graphs, converts them to GFA with
 [vg](https://github.com/vgteam/vg) (only needed once), builds and verifies the
 diploid graphs, sizes both graphs over 21 vertex orders, decodes sampled
 haplotype pairs, measures which added vertices are used by the observed
-haplotypes, and writes the results table (`results/results_table.md`, in the
-same form as above, with the extra rows) and the figure. Sizes are reproduced
+haplotypes, counts the PanGenie and vg call state spaces on the same graph,
+and writes the results table (`experiments/results/results_table.md`, the same
+rows as above) and the figure. Sizes are reproduced
 exactly; times and memory depend on the machine. If the GFA files already exist, point to them with
 `DATA=/path/to/folder bash reproduce.sh` and vg is not needed.
 
@@ -214,6 +216,8 @@ See [experiments/README.md](experiments/README.md) for:
 * the no-decomposition ablation (`no_decomposition.py`) and vertex-order
   sensitivity of both graphs (`order_sensitivity.py`);
 * per-pair decoding of sampled haplotype pairs (`pair_check.py`);
+* state-space sizes of PanGenie and vg call on the same graph
+  (`external_state_space.py`);
 * which added vertices are used by observed haplotype pairs
   (`observed_support.py`, `explain_unsupported.py`);
 * scaling on random series-parallel graphs (`synthetic_scaling.py`, `plot_synthetic.py`).
@@ -221,7 +225,7 @@ See [experiments/README.md](experiments/README.md) for:
 ## Repository layout
 
 ```
-src/diploidgraph/   package: seqgraph, gfa, decompose, diploid, validate, support, stats, export, cli
+src/diploidgraph/   package: seqgraph, gfa, decompose, diploid, validate, support, stats, external, export, cli
 tests/              pytest suite
 examples/           worked examples and figures
 experiments/        scripts and figures for the paper's measurements

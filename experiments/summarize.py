@@ -10,6 +10,7 @@ experiments/results/results_table.md and experiments/results/real_loci.json
 
 from __future__ import annotations
 
+import csv
 import json
 import math
 import pathlib
@@ -20,6 +21,26 @@ ORDER = ["BRCA1", "MHC"]
 
 def load(path: pathlib.Path):
     return json.loads(path.read_text()) if path.exists() else None
+
+
+def load_csv_row(path: pathlib.Path):
+    """First row of a CSV written by external_state_space.py, numbers parsed."""
+    if not path.exists():
+        return None
+    with path.open() as fh:
+        row = next(csv.DictReader(fh), None)
+    if row is None:
+        return None
+    out = {}
+    for k, v in row.items():
+        try:
+            out[k] = int(v)
+        except ValueError:
+            try:
+                out[k] = float(v)
+            except ValueError:
+                out[k] = v
+    return out
 
 
 def n(x) -> str:
@@ -34,6 +55,8 @@ def main() -> None:
     loci = [l for l in ORDER if l in found] + sorted(l for l in found if l not in ORDER)
     J = {l: {k: load(out / f"{l}_{k}.json") for k in ("stats", "pairs", "order", "unsupported")}
          for l in loci}
+    for l in loci:
+        J[l]["external"] = load_csv_row(out / f"{l}_external.csv")
 
     def row(label, f):
         cells = []
@@ -92,6 +115,13 @@ def main() -> None:
             lambda j: n(j["stats"]["naive_ordered_observed_nodes"])),
         row("Ordered pairs of source-to-sink paths represented",
             lambda j: f"about 10^{j['stats']['log10_st_paths'] * 2:.0f}"),
+        row("PanGenie model, counted on the same graph: bubbles (k = 31) / hidden states M x N^2 (N = complete walks)",
+            lambda j: f"{n(j['external']['pangenie_bubbles'])} / {n(j['external']['pangenie_states'])} "
+                      f"(N = {j['external']['n_complete_walks']})"),
+        row("PanGenie model: ordered pairs it can decode (mosaics of the panel haplotypes)",
+            lambda j: f"about 10^{j['external']['log10_pangenie_covered_ordered_pairs']:.0f}"),
+        row("vg call model, counted on the same graph: top-level sites / candidate traversals (no phase between sites)",
+            lambda j: f"{n(j['external']['vgcall_sites'])} / {n(j['external']['vgcall_candidate_traversals'])}"),
         row("Sampled pairs decoded exactly once: observed haplotypes; random-successor paths",
             lambda j: f"{j['pairs']['observed']['decoded_exactly_once']}/{j['pairs']['observed']['pairs']}; "
                       f"{j['pairs']['random']['decoded_exactly_once']}/{j['pairs']['random']['pairs']}"),

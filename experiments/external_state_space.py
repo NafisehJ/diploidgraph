@@ -40,7 +40,10 @@ def main() -> None:
     rows = []
     for path in args.gfa:
         t0 = time.perf_counter()
-        r = external_sizes(path, k=args.k)
+        try:
+            r = external_sizes(path, k=args.k)
+        except ValueError as err:  # e.g. a GFA without complete haplotype walks
+            r = {"input": path, "error": str(err)}
         r["time_s"] = time.perf_counter() - t0
         r["peak_rss_mb"] = peak_rss_mb()
         print(json.dumps(r, indent=2))
