@@ -33,6 +33,7 @@ def main() -> None:
     sup = {l: load(out / f"{l}_unsupported.json") for l in loci}
     pairs = {l: load(out / f"{l}_pairs.json") for l in loci}
     order = {l: load(out / f"{l}_order.json") for l in loci}
+    prod = {l: load(out / f"{l}_product.json") for l in loci}
 
     def row(label, f):
         cells = []
@@ -56,6 +57,8 @@ def main() -> None:
         row("Non-series-parallel core: vertices / edges", lambda s, u: f"{fmt(s['core_vertices'])} / {fmt(s['core_edges'])}"),
         row("Diploid graph vertices / edges", lambda s, u: f"{fmt(s['diploid_vertices'])} / {fmt(s['diploid_edges'])}"),
         row("Diploid vertices per input vertex", lambda s, u: f"{s['diploid_vertices'] / s['n_vertices']:.2f}"),
+        row("Product-graph baseline vertices (same pairs, no decomposition)",
+            lambda s, u, l=None: "-"),
         row("Naive pairing of observed walks, paired vertices", lambda s, u: fmt(s["naive_ordered_observed_nodes"])),
         row("Fewer vertices than naive (x)", lambda s, u: f"{s['naive_ordered_observed_nodes'] / s['diploid_vertices']:,.0f}"),
         row("log10 of ordered pairs of all source-to-sink paths", lambda s, u: f"{s['log10_naive_ordered_all_paths']:.0f}"),
@@ -67,6 +70,18 @@ def main() -> None:
         row("Peak memory (MB)", lambda s, u: f"{s['peak_rss_mb']:,.0f}"),
         row("Exactness check (weighted count = N^2)", lambda s, u: f"{fmt(s['exactness_passed'])} ({s['exactness_check']})"),
     ]
+    # fill the baseline row (needs the product JSON, not the stats JSON)
+    for k, r in enumerate(rows):
+        if r.startswith("| Product-graph baseline"):
+            cells = []
+            for l in loci:
+                pr = prod[l]
+                if not pr:
+                    cells.append("-")
+                else:
+                    bound = ">= " if pr["product_is_lower_bound"] else ""
+                    cells.append(f"{bound}{pr['product_vertices']:,} ({pr['product_over_diploid']:,.0f}x ours)")
+            rows[k] = "| Product-graph baseline vertices (same pairs, no decomposition) | " + " | ".join(cells) + " |"
     extra = []
     for l in loci:
         pr, od = pairs[l], order[l]

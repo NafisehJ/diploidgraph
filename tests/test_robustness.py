@@ -96,3 +96,25 @@ def test_gfa_blank_lines_and_walks_off_graph(tmp_path):
     g = SequenceGraph.from_edges([("1", "2")])
     _, counts = observed_support(g, walks)
     assert counts["not_in_graph"] == 1 and counts["distinct_full"] == 1
+
+
+@pytest.mark.parametrize("seed", range(30))
+def test_product_baseline_is_exact_and_not_smaller(seed):
+    """The product-graph baseline represents the same pairs (exactly once each)."""
+    from diploidgraph.decompose import trivial_decomposition
+    rng = random.Random(seed)
+    g = random_dag(n_ops=7, extra_edges=seed % 3, seed=seed) if seed % 2 else \
+        dense_random_dag(rng.randint(3, 8), 0.5, seed=seed)
+    tdec = trivial_decomposition(g)
+    gd_prod, _ = build_diploid(g, tdec)
+    assert brute_force_check(g, gd_prod)["exact"]
+    size = diploid_size(g, tdec)
+    assert size["vertices"] == gd_prod.num_vertices() and not size["capped"]
+    assert diploid_size(g)["vertices"] <= size["vertices"]
+
+
+def test_size_cap():
+    from diploidgraph.decompose import trivial_decomposition
+    g = random_sp_dag(200, seed=1)
+    size = diploid_size(g, trivial_decomposition(g), max_pair_states=100)
+    assert size["capped"]

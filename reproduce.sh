@@ -43,6 +43,9 @@ for L in $LOCI; do
   step "$L: build the diploid graph, verify it, measure time and memory"
   python -m diploidgraph.cli "$GFA" --json "$OUT/${L}_stats.json" > /dev/null
 
+  step "$L: product-graph baseline (same pairs, no decomposition)"
+  python "$ROOT/experiments/product_baseline.py" "$GFA" --json "$OUT/${L}_product.json" > /dev/null
+
   step "$L: check sampled haplotype pairs one by one (each must be decoded exactly once)"
   python "$ROOT/experiments/pair_check.py" "$GFA" --pairs "${PAIRS:-100}" --json "$OUT/${L}_pairs.json" > /dev/null
 

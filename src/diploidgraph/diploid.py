@@ -174,16 +174,18 @@ def _add_core(gd: DiploidGraph, r: DecompNode, rank: Dict[Vertex, int]) -> None:
             link(step, state(c.sink, other) if h == 1 else state(other, c.sink))
 
 
-def diploid_size(g: SequenceGraph, dec: Decomposition | None = None) -> Dict[str, int]:
+def diploid_size(g: SequenceGraph, dec: Decomposition | None = None, max_pair_states: int | None = None) -> Dict[str, int]:
     """Vertex and edge counts of G_D, by kind, without building it.
 
     Gives the same numbers as build_diploid (checked in the tests) but stores
     only integer-coded pair states, so it runs on graphs whose core is too large
-    to materialize in Python.
+    to materialize in Python. With max_pair_states, the search stops once that
+    many pair states are found and the result has "capped": True (the counts are
+    then lower bounds).
     """
     dec = dec or decompose(g)
     het = sum(len(p.children) * (len(p.children) - 1) for p in dec.nodes("P"))
-    counts = {"hom": g.num_vertices(), "het": het, "fork": 0, "pair": 0, "step": 0}
+    counts = {"hom": g.num_vertices(), "het": het, "fork": 0, "pair": 0, "step": 0, "capped": False}
     n_edges = g.num_edges() + 2 * het
     rank = {v: i for i, v in enumerate(g.topological_order())}
     for r in dec.nodes("R"):
@@ -203,6 +205,9 @@ def diploid_size(g: SequenceGraph, dec: Decomposition | None = None) -> Dict[str
                         seen.add(a * n + b)
                         queue.append(a * n + b)
         while queue:
+            if max_pair_states is not None and counts["pair"] + len(seen) > max_pair_states:
+                counts["capped"] = True
+                break
             u, v = divmod(queue.popleft(), n)
             lag, other, first = (u, v, True) if u < v else (v, u, False)
             for w in out[lag]:

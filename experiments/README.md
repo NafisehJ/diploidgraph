@@ -88,7 +88,18 @@ python experiments/order_sensitivity.py BRCA1.gfa --orders 20 --json brca1_order
   pair of core vertices. It shows why the construction does not add one vertex per
   disjoint path pair: on BRCA1 it stops after more than 2,000,000 core paths.
 
+## 7. Product-graph baseline
+
+The fair like-for-like comparison: the same pair-state construction applied to
+every vertex of the input, without the series-parallel decomposition. It
+represents exactly the same haplotype pairs (checked in `tests/test_robustness.py`),
+so the size difference is the saving due to the decomposition.
+
+```bash
+python experiments/product_baseline.py BRCA1.gfa --json brca1_product.json
+```
+
 ## Everything at once
 
-`bash reproduce.sh` (repository root) runs sections 2-5 for BRCA1 and MHC and
+`bash reproduce.sh` (repository root) runs sections 2-5 and 7 for BRCA1 and MHC and
 prints a summary table; `bash reproduce.sh --quick` runs BRCA1 only.

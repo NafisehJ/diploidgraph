@@ -191,3 +191,21 @@ def _count_core_paths(r: DecompNode) -> int:
             if indeg[c.sink] == 0:
                 frontier.append(c.sink)
     return ways[r.sink]
+
+
+def trivial_decomposition(g: SequenceGraph) -> Decomposition:
+    """A decomposition with no series or parallel reductions: the whole graph is one
+    irreducible core whose edges are the edges of G.
+
+    Feeding it to build_diploid / diploid_size gives the *product-graph baseline*:
+    the same pair-state construction applied to every vertex of G instead of only
+    to the non-series-parallel core. It represents exactly the same haplotype pairs.
+    """
+    s, t = g.terminals()
+    children = [DecompNode("Q", u, v) for u, v in g.edges()]
+    root = DecompNode("R", s, t, children) if children else DecompNode("S", s, t, [])
+    uid = count()
+    for n in root.walk():
+        n.uid = next(uid)
+    annotate(root)
+    return Decomposition(root=root, source=s, sink=t, is_series_parallel=not children)
