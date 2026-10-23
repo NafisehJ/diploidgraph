@@ -94,7 +94,7 @@ def main() -> None:
     ax.legend(loc="upper left", frameon=False, fontsize=10, bbox_to_anchor=(0.0, 1.0))
     times = ", ".join(f"{data[l]['build_s']:.2g} s ({l})" for l in loci)
     fig.text(0.075, 0.03,
-             f"Blue and green: median size over {data[loci[0]].get('orders', 'several')} vertex orders. "
+             f"Blue and green: middle value of {data[loci[0]].get('orders', 'several')} runs (size changes slightly with node order). "
              f"Build time on a laptop (8 GB RAM): {times}.",
              ha="left", fontsize=9.5, color=INK2)
     fig.subplots_adjust(left=0.075, right=0.98, top=0.87, bottom=0.15)
