@@ -1,4 +1,4 @@
-"""Figure: diploid graph size vs the no-decomposition ablation and naive pairing, BRCA1 and MHC.
+"""Figure: diploid graph size vs the Cartesian-product ablation and naive pairing, BRCA1 and MHC.
 
     python experiments/plot_real.py experiments/results/real_loci.json --out experiments/figures/real_loci.png
 """

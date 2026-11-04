@@ -248,11 +248,10 @@ See [experiments/README.md](experiments/README.md) for:
 ## Repository layout
 
 ```
-src/diploidgraph/   package: seqgraph, gfa, decompose, diploid, validate, support, stats, external, export, cli
+src/diploidgraph/   package: seqgraph, gfa, decompose, diploid, validate, support, stats, external, export, generators, cli
 tests/              pytest suite
 examples/           worked examples, figures and small GFA files (examples/data/)
 experiments/        scripts and figures for the paper's measurements
-notebooks/          original prototype notebooks (superseded by the package)
 ```
 
 ## Citation

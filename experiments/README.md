@@ -88,10 +88,11 @@ python experiments/order_sensitivity.py BRCA1.gfa --orders 20 --json brca1_order
   pair of core vertices. It shows why the construction does not add one vertex per
   disjoint path pair: on BRCA1 it stops after more than 2,000,000 core paths.
 
-## 7. Ablation: no decomposition
+## 7. Ablation: Cartesian product with a fixed order of moves
 
-An ablation of our own method: the same pair-state construction applied to
-every vertex of the input, without the series-parallel decomposition. It
+An ablation of our own method (no decomposition): the same pair-state
+construction applied to every vertex of the input, without the series-parallel
+decomposition. It
 represents exactly the same haplotype pairs (checked in `tests/test_robustness.py`),
 so the size difference is the saving due to the decomposition. It is not an
 external method. Its size also depends on the vertex order, so

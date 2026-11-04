@@ -3,7 +3,7 @@
 #
 # Usage:
 #   bash reproduce.sh                 # both loci (MHC takes about 30 minutes, 1.5 GB of RAM)
-#   bash reproduce.sh --quick         # BRCA1 only (under a minute)
+#   bash reproduce.sh --quick         # BRCA1 only (a few minutes)
 #   DATA=~/brca1 bash reproduce.sh    # use a folder that already holds BRCA1.gfa / MHC.gfa
 #
 # Needs: python >= 3.10 with this package installed (python -m pip install -e .),

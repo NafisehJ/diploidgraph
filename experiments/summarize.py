@@ -106,10 +106,10 @@ def main() -> None:
             lambda j: f"{n(j['stats']['diploid_vertices'])} / {n(j['stats']['diploid_edges'])}"),
         row("Diploid vertices per input vertex (median)",
             lambda j: f"{j['order']['vertices_min_median_max'][1] / j['stats']['n_vertices']:.2f}"),
-        row("No decomposition: vertices, median over the same orders (min to max)",
+        row("Cartesian product with a fixed order of moves: vertices, median over the same orders (min to max)",
             lambda j: med(j["order"]["product_vertices_min_median_max"])
             + (" (lower bound)" if j["order"]["product_any_capped"] else "")),
-        row("No decomposition / diploid graph, ratio of medians",
+        row("Cartesian product / diploid graph, ratio of medians",
             lambda j: f"{j['order']['median_ratio_product_over_ours']:.1f}x"),
         row("Naive pairing of distinct complete haplotypes, paired positions",
             lambda j: n(j["stats"]["naive_ordered_observed_nodes"])),
