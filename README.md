@@ -15,25 +15,25 @@ the irreducible core that contains their W-motifs.
 
 On two HPRC v2.0 pangenome loci (BRCA1 and MHC):
 
-* **Compact:** 2.3x (BRCA1) and 3.0x (MHC) fewer vertices than the same
-  pair-state construction without decomposition, which represents exactly the
-  same haplotype pairs (median over 21 vertex orders). Pairing the observed
+* **Compact:** 2.3x (BRCA1) and 3.0x (MHC) fewer vertices than the Cartesian
+  product with a fixed order of moves, which represents exactly the same
+  haplotype pairs (median over 21 vertex orders). Pairing the observed
   haplotypes one by one would need about 4 x 10^4 to 5 x 10^4 times more
   vertices (different units; see below).
 * **Exact:** every ordered pair of source-to-sink paths is represented by
   exactly one walk. The proof, including the construction for the
   non-series-parallel core (new since the bioRxiv 2025 version), is in the
-  revised manuscript (in preparation). The code checks this by brute force on small
+  manuscript under review (supplementary material). The code checks this by brute force on small
   graphs and, on real loci, with a whole-graph count and on sampled haplotype
   pairs (evidence, not a proof).
 * **Fast:** 0.04 s for BRCA1 and under 10 s for MHC on a laptop.
 
 <img src="experiments/figures/real_loci.png" width="100%">
 
-Paper: N. Jafarzadeh, J. M. Eizenga, B. Paten. *An Efficient Graph Algorithm for
-Diploid Local Ancestry Inference.* bioRxiv 2025.
-[doi:10.1101/2025.07.05.662656](https://doi.org/10.1101/2025.07.05.662656)
-This repository was previously named `spqr-diploid-genotyper`; old links redirect here.
+Paper: N. Jafarzadeh, J. M. Eizenga, B. Paten. *Diploid Sequence Graphs: Compact
+Representation of Haplotype Pairs via SPQR-Tree Decomposition.* Manuscript under review.
+Earlier version: *An Efficient Graph Algorithm for Diploid Local Ancestry Inference.*
+bioRxiv 2025. [doi:10.1101/2025.07.05.662656](https://doi.org/10.1101/2025.07.05.662656)
 
 ## Results on real pangenome loci
 
@@ -52,8 +52,8 @@ vertex orders; edges, time and memory in the GFA vertex order, single run.
 | **Diploid graph vertices, median over 21 vertex orders** (min to max) | **8,158** (7,678 to 8,842) | **877,565** (874,039 to 887,929) |
 | Diploid graph vertices / edges in the GFA vertex order | 8,250 / 12,592 | 887,929 / 1,361,520 |
 | Diploid vertices per input vertex (median) | 3.02 | 2.51 |
-| No decomposition: vertices, median over the same orders (min to max) | 18,916 (17,882 to 20,746) | 2,626,487 (2,574,811 to 2,709,299) |
-| No decomposition / diploid graph, ratio of medians | 2.3x | 3.0x |
+| Cartesian product with a fixed order of moves: vertices, median over the same orders (min to max) | 18,916 (17,882 to 20,746) | 2,626,487 (2,574,811 to 2,709,299) |
+| Cartesian product / diploid graph, ratio of medians | 2.3x | 3.0x |
 | Naive pairing of distinct complete haplotypes, paired positions | 351,071,710 | 45,696,235,174 |
 | Ordered pairs of source-to-sink paths represented | about 10^570 | about 10^71057 |
 | PanGenie model, counted on the same graph: bubbles (k = 31) / hidden states M x N^2 (N = panel haplotypes) | 545 / 115,823,945 (N = 461) | 38,829 / 8,216,216,400 (N = 460) |
@@ -66,8 +66,8 @@ vertex orders; edges, time and memory in the GFA vertex order, single run.
 
 How to read the comparisons:
 
-* **No decomposition** is an ablation: our own pair-state construction applied
-  to the whole input instead of only to the non-series-parallel core. While the
+* **Cartesian product with a fixed order of moves** is an ablation (no
+  decomposition): our own pair-state construction applied to the whole input instead of only to the non-series-parallel core. While the
   two haplotypes are at the same vertex, both advance one edge (along the same
   edge or along two different edges); otherwise only the one that is earlier in
   a fixed topological order advances. This is the part of a product of G with
@@ -196,7 +196,7 @@ one walk, and nothing else is decoded.
 The test suite (`tests/`) checks exactness by brute force on random
 series-parallel and non-series-parallel graphs, and by the weighted count on
 large graphs. `tests/test_robustness.py` adds dense random DAGs in shuffled
-vertex orders, deletion branches, the no-decomposition ablation, determinism of sizes,
+vertex orders, deletion branches, the Cartesian-product ablation, determinism of sizes,
 and a swapped-pair construction that passes the count but fails the per-pair
 check. Tests run on every push (see badge).
 
@@ -212,7 +212,7 @@ See [experiments/README.md](experiments/README.md) for:
 
 * runtime, peak memory and diploid graph size on real gene/locus-level
   pangenome subgraphs (`real_graphs.py`, `summarize.py`, `plot_real.py`);
-* the no-decomposition ablation (`no_decomposition.py`) and vertex-order
+* the Cartesian-product ablation (`no_decomposition.py`) and vertex-order
   sensitivity of both graphs (`order_sensitivity.py`);
 * per-pair decoding of sampled haplotype pairs (`pair_check.py`);
 * state-space size of the PanGenie model on the same graph
@@ -232,6 +232,8 @@ notebooks/          original prototype notebooks (superseded by the package)
 ```
 
 ## Citation
+
+Until the revised paper is published, please cite the bioRxiv preprint:
 
 ```bibtex
 @article{jafarzadeh2025diploid,
