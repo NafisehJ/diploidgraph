@@ -7,15 +7,6 @@
 **Compact diploid sequence graphs from two-terminal DAG sequence graphs: every
 ordered pair of haplotype paths, each represented by exactly one walk.**
 
-<p align="center">
-  <a href="examples/out/10_mhc_window_diploid.png"><img src="examples/out/10_mhc_window_diploid.png" width="840" alt="Diploid graph of a real MHC window"></a>
-  <br>
-  <sub>Diploid graph of a real 36-segment window of the HPRC v2.0 MHC graph (a 164 bp
-  insertion, a poly-A tract and a W-motif). It represents all 28,224 ordered pairs of
-  the window's 168 source-to-sink paths, each by exactly one walk, with 106 vertices.
-  Click to enlarge; details in <a href="examples/README.md#mhc-a-164-bp-insertion-and-a-poly-a-tract">examples</a>.</sub>
-</p>
-
 A haploid sequence graph encodes haplotypes as source-to-sink paths. A diploid
 sequence graph encodes **ordered pairs of haplotypes** as walks: every pair of
 source-to-sink paths, including recombinant pairs that no sample carries.
@@ -125,6 +116,17 @@ How to read the comparisons:
 
 Reading the MHC GFA takes about 50 s in pure Python and is not included in the
 build time.
+
+### A closer look: a real window of MHC
+
+<p align="center">
+  <a href="examples/out/10_mhc_window_diploid.png"><img src="examples/out/10_mhc_window_diploid.png" width="840" alt="Diploid graph of a real MHC window"></a>
+  <br>
+  <sub>Diploid graph of a real 36-segment window of the HPRC v2.0 MHC graph (a 164 bp
+  insertion, a poly-A tract and a W-motif). It represents all 28,224 ordered pairs of
+  the window's 168 source-to-sink paths, each by exactly one walk, with 106 vertices.
+  Click to enlarge; details in <a href="examples/README.md#mhc-a-164-bp-insertion-and-a-poly-a-tract">examples</a>.</sub>
+</p>
 
 ## Reproduce the results
 
