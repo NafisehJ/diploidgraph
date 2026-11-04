@@ -1,8 +1,20 @@
 # diploidgraph
 
 [![tests](https://github.com/NafisehJ/diploidgraph/actions/workflows/tests.yml/badge.svg)](https://github.com/NafisehJ/diploidgraph/actions/workflows/tests.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](pyproject.toml)
 
-Compact **diploid sequence graphs** from two-terminal DAG sequence graphs.
+**Compact diploid sequence graphs from two-terminal DAG sequence graphs: every
+ordered pair of haplotype paths, each represented by exactly one walk.**
+
+<p align="center">
+  <a href="examples/out/10_mhc_window_diploid.png"><img src="examples/out/10_mhc_window_diploid.png" width="840" alt="Diploid graph of a real MHC window"></a>
+  <br>
+  <sub>Diploid graph of a real 36-segment window of the HPRC v2.0 MHC graph (a 164 bp
+  insertion, a poly-A tract and a W-motif). It represents all 28,224 ordered pairs of
+  the window's 168 source-to-sink paths, each by exactly one walk, with 106 vertices.
+  Click to enlarge; details in <a href="examples/README.md#mhc-a-164-bp-insertion-and-a-poly-a-tract">examples</a>.</sub>
+</p>
 
 A haploid sequence graph encodes haplotypes as source-to-sink paths. A diploid
 sequence graph encodes **ordered pairs of haplotypes** as walks: every pair of
@@ -34,6 +46,12 @@ Paper: N. Jafarzadeh, J. M. Eizenga, B. Paten. *Diploid Sequence Graphs: Compact
 Representation of Haplotype Pairs via SPQR-Tree Decomposition.* Manuscript under review.
 Earlier version: *An Efficient Graph Algorithm for Diploid Local Ancestry Inference.*
 bioRxiv 2025. [doi:10.1101/2025.07.05.662656](https://doi.org/10.1101/2025.07.05.662656)
+
+**Contents:** [Results](#results-on-real-pangenome-loci) ·
+[Reproduce](#reproduce-the-results) · [Install](#install) ·
+[Quick start](#quick-start) · [The construction](#the-construction) ·
+[Correctness checks](#correctness-checks) · [Examples](#examples) ·
+[Experiments](#experiments) · [Citation](#citation)
 
 ## Results on real pangenome loci
 
@@ -142,6 +160,7 @@ plots and Graphviz `dot` for example figures are optional.
 ```bash
 diploidgraph graph.gfa --json stats.json                 # build, verify, report sizes
 diploidgraph graph.gfa --count-only --json stats.json    # sizes only, for very large graphs
+diploidgraph examples/data/mhc_window.gfa                # try it on the real MHC window above
 ```
 
 ```python
