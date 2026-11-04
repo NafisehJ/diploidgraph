@@ -1,13 +1,33 @@
 # Worked examples
 
-Eight small sequence graphs, from a single SNP to a non-series-parallel W-motif,
-including the worked example of the paper and a synthetic locus in GFA format.
-For each one: the input graph, its diploid graph, and an exactness check (every
-ordered pair of source-to-sink paths of the input is decoded by exactly one walk
-of the diploid graph, verified by brute force).
+Two kinds of examples, each with the input graph, its diploid graph and an
+exactness check (every ordered pair of source-to-sink paths of the input is
+decoded by exactly one walk of the diploid graph, verified by brute force):
+
+* **Small synthetic examples (1 to 8):** made-up graphs, from a single SNP to a
+  non-series-parallel W-motif, including the worked example of the paper and a
+  synthetic locus in GFA format that combines all of them.
+* **Real pangenome data:** a window of the HPRC v2.0 pangenome graph of BRCA1,
+  one of the two loci of the paper, with its real sequences and haplotypes.
 
 `python examples/run_examples.py --png` (run from the repository root) regenerates
-the figures and the table below in `examples/out/`.
+the figures and the tables below in `examples/out/`.
+
+**Cartesian product** is the Cartesian product with a fixed order of moves: the
+same pair-state construction applied to the whole input, without decomposition.
+It represents exactly the same haplotype pairs and is counted in the same unit
+(vertices), so it shows the saving due to the decomposition.
+
+**How to read the figures.** Blue ellipses `(v,v)` are the homozygous copy of the
+input: both haplotypes at `v`. Orange boxes `(x, y)` are heterozygous vertices of a
+P-node: haplotype 1 crosses the bubble through branch `x`, haplotype 2 through
+branch `y` (`-` is a direct edge; nested alternatives are written `(b|c)`). In the
+non-series-parallel examples (6, 7, 8 and the real data), a green box `(c, d)` is where the two haplotypes
+separate (haplotype 1 goes to `c`, haplotype 2 to `d`), a grey diamond `[u | v]` is
+a pair state (haplotype 1 at `u`, haplotype 2 at `v`), and an arrow labelled
+`h1 → t` moves haplotype 1 to `t` while haplotype 2 waits, until both meet again.
+
+## Small synthetic examples
 
 | Example | \|V\| | s-t paths N | P-nodes | **\|V(G_D)\| (ours)** | \|V\| of Cartesian product | exact |
 |---|---|---|---|---|---|---|
@@ -20,33 +40,19 @@ the figures and the table below in `examples/out/`.
 | 7. Worked example of the paper (Figure 1) | 6 | 4 | 1 | **22** | 46 | yes |
 | 8. A synthetic locus in GFA format (all of the above together) | 17 | 63 | 5 | **45** | 121 | yes |
 
-**Cartesian product** is the Cartesian product with a fixed order of moves: the
-same pair-state construction applied to the whole input, without decomposition.
-It represents exactly the same haplotype pairs and is counted in the same unit
-(vertices), so it shows the saving due to the decomposition.
-
-**How to read the figures.** Blue ellipses `(v,v)` are the homozygous copy of the
-input: both haplotypes at `v`. Orange boxes `(x, y)` are heterozygous vertices of a
-P-node: haplotype 1 crosses the bubble through branch `x`, haplotype 2 through
-branch `y` (`-` is a direct edge; nested alternatives are written `(b|c)`). In the
-non-series-parallel example, a green box `(c, d)` is where the two haplotypes
-separate (haplotype 1 goes to `c`, haplotype 2 to `d`), a grey diamond `[u | v]` is
-a pair state (haplotype 1 at `u`, haplotype 2 at `v`), and an arrow labelled
-`h1 → t` moves haplotype 1 to `t` while haplotype 2 waits, until both meet again.
-
-## 1. One bubble (SNP)
+### 1. One bubble (SNP)
 
 Two alleles `a` and `b`. The diploid graph adds the two heterozygous vertices `(a, b)` and `(b, a)`.
 
 <img src="out/01_bubble_input.png" height="110"> &nbsp;&nbsp; <img src="out/01_bubble_diploid.png" height="170">
 
-## 2. Three alleles
+### 2. Three alleles
 
 A bubble with three branches adds one vertex per ordered pair of distinct branches: 3 x 2 = 6.
 
 <img src="out/02_three_alleles_input.png" height="130"> &nbsp;&nbsp; <img src="out/02_three_alleles_diploid.png" height="260">
 
-## 3. Two bubbles in series and a large deletion
+### 3. Two bubbles in series and a large deletion
 
 Two bubbles in series, plus a direct edge `s -> t` that skips both: a large
 deletion. The two haplotypes can differ at either bubble, at both, or at none,
@@ -58,7 +64,7 @@ Cartesian product.
 <img src="out/03_two_bubbles_input.png" height="110"><br>
 <img src="out/03_two_bubbles_diploid.png" height="260">
 
-## 4. Nested bubble (insertion carrying a SNP)
+### 4. Nested bubble (insertion carrying a SNP)
 
 One allele of the outer bubble (`s -> t`) is an insertion `a (b|c) d` that itself
 carries a SNP. The inner bubble is expanded inside the insertion; the outer bubble
@@ -66,14 +72,14 @@ pairs the whole insertion with the direct edge.
 
 <img src="out/04_nested_input.png" height="130"> &nbsp;&nbsp; <img src="out/04_nested_diploid.png" height="210">
 
-## 5. Random nested series-parallel graph
+### 5. Random nested series-parallel graph
 
 A larger random example with four nested bubbles.
 
 <img src="out/05_random_sp_input.png" height="320"><br>
 <img src="out/05_random_sp_diploid.png" width="100%">
 
-## 6. Bubble followed by a W-motif (non-series-parallel)
+### 6. Bubble followed by a W-motif (non-series-parallel)
 
 A bubble `s -> {a, b} -> m`, then a W-motif with diagonal edge `c -> d`. The bubble
 is handled as in example 1; inside the W-motif the two haplotypes are followed with
@@ -83,7 +89,7 @@ labelled arrows; in the table they are counted as vertices (23 vertices in total
 <img src="out/06_w_motif_input.png" height="130"><br>
 <img src="out/06_w_motif_diploid.png" width="100%">
 
-## 7. Worked example of the paper (Figure 1)
+### 7. Worked example of the paper (Figure 1)
 
 The input graph of Figure 1 of the paper: edges `u -> u'`, `u -> v'`, `u' -> c`,
 `u' -> d`, `c -> v'`, `d -> v'`, `u' -> v`, `v' -> v`. It is not series-parallel.
@@ -97,7 +103,7 @@ is decoded by exactly one walk.
 <img src="out/07_paper_figure1_input.png" height="130"><br>
 <img src="out/07_paper_figure1_diploid.png" width="100%">
 
-## 8. A synthetic locus in GFA format: all of the above together
+### 8. A synthetic locus in GFA format: all of the above together
 
 A small synthetic locus (made-up sequences and sample names) in GFA format,
 [data/locus.gfa](data/locus.gfa), the input format of pangenome graphs: 17 segments (`S`), 24 links (`L`) and 7 haplotype walks
@@ -158,3 +164,64 @@ as in example 6.
 
 <img src="out/08_gfa_input.png" width="100%"><br>
 <img src="out/08_gfa_diploid.png" width="100%">
+
+## Real pangenome data (HPRC v2.0)
+
+| Example | \|V\| | s-t paths N | P-nodes | **\|V(G_D)\| (ours)** | \|V\| of Cartesian product | exact |
+|---|---|---|---|---|---|---|
+| BRCA1 window: a CA repeat | 23 | 168 | 15 | **85** | 623 | yes |
+
+### BRCA1: a CA repeat
+
+A real piece of the BRCA1 graph used in the paper (HPRC v2.0 Minigraph-Cactus,
+GRCh38-based), [data/brca1_window.gfa](data/brca1_window.gfa): 23 segments,
+40 links and 464 haplotype walks (assemblies of HPRC samples, plus GRCh38 and
+CHM13), with their real segment IDs, sequences and coordinates. The full graph
+has 465 walks; one of them does not pass through this window. The window was cut
+from the full graph with
+
+```bash
+python examples/extract_window.py BRCA1.gfa --pick 1 --out examples/data/brca1_window.gfa
+```
+
+which looks for a window between two vertices that every haplotype passes
+through, and prefers windows with a non-series-parallel core, a large deletion
+and many bubbles.
+
+The figures write the segments as letters in their order: `a` = 62857415,
+`b` = 62857416, ..., `w` = 62857437.
+
+* **A CA repeat.** After segment `i`, a haplotype goes through between 0 and 13
+  repeat segments (`j` to `v`: `CA`, `CACACACA`, ...) before the last segment
+  `w`, so the haplotypes differ in the number of repeat units. Skipping all of
+  them is a 32 bp deletion. In the diploid graph, a branch through some of the
+  repeat segments `j` to `t` is written `j..t`; `(-, j..t)` means haplotype 1
+  skips the repeat segments there and haplotype 2 goes through them.
+* **A W-motif.** The start of the window is not series-parallel:
+  `a -> {b, c}` with the diagonal `b -> c`, and the edge `a -> f` skips it.
+  This part is handled by pair states (green boxes and grey diamonds).
+
+```bash
+diploidgraph examples/data/brca1_window.gfa --json stats.json
+```
+
+```
+"n_vertices": 23,
+"n_edges": 40,
+"n_haplotype_walks": 464,
+"n_distinct_full_haplotype_walks": 24,
+"is_series_parallel": false,
+"n_pnodes": 15,
+"core_vertices": 6,
+"diploid_vertices": 85,
+"diploid_edges": 144,
+"exactness_check": "exact",
+```
+
+The 464 walks contain only 24 distinct haplotypes, but the graph has 168
+source-to-sink paths. The diploid graph represents all 168^2 = 28,224 ordered
+pairs, including pairs no sample carries, each by exactly one walk (checked by
+brute force), with 85 vertices; the Cartesian product needs 623.
+
+<img src="out/09_brca1_window_input.png" width="100%"><br>
+<img src="out/09_brca1_window_diploid.png" width="100%">

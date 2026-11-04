@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import pathlib
+import re
 import shutil
 import subprocess
 
@@ -39,6 +40,36 @@ def examples():
     yield "07_paper_figure1", "Worked example of the paper (Figure 1); non-series-parallel.", SequenceGraph.from_edges(
         [("u", "u'"), ("u", "v'"), ("u'", "c"), ("u'", "d"), ("c", "v'"), ("d", "v'"), ("u'", "v"), ("v'", "v")])
     yield "08_gfa", "Synthetic locus read from a GFA file (examples/data/locus.gfa): SNPs, three alleles, a nested insertion, a W-motif and a large deletion.", read_gfa(str(DATA / "locus.gfa")).graph
+    # Real segment IDs are 62857415..62857437; the figures show them as letters a..w, in order.
+    real = read_gfa(str(DATA / "brca1_window.gfa")).graph
+    letter = {v: chr(ord("a") + int(v) - 62857415) for v in real.vertices}
+    yield "09_brca1_window", "BRCA1 window (HPRC v2.0, real data), cut with extract_window.py: a CA repeat.", SequenceGraph.from_edges(
+        [(letter[u], letter[v]) for u, v in real.edges()])
+
+
+SHORT_LABEL = re.compile(r'label="\(([^"]+)\)"')
+
+
+def _short_label(m: "re.Match") -> str:
+    """Write a nested branch of a heterozygous vertex as its first and last segment, e.g. (-, j..v)."""
+    text, depth, cut = m.group(1), 0, None
+    for i, ch in enumerate(text):
+        depth += ch == "("
+        depth -= ch == ")"
+        if ch == "," and depth == 0:
+            cut = i
+            break
+    if cut is None or "(" not in text:
+        return m.group(0)
+
+    def side(x: str) -> str:
+        x = x.strip()
+        if "(" not in x:
+            return x
+        segs = re.findall(r"[a-z]", x)
+        return f"{segs[0]}..{segs[-1]}"
+
+    return f'label="({side(text[:cut])}, {side(text[cut + 1:])})"'
 
 
 def render(dot_path: pathlib.Path) -> None:
@@ -64,7 +95,10 @@ def main() -> None:
         (OUT / f"{name}_input.dot").write_text(sequence_graph_dot(g))
         gd, _ = build_diploid(g, dec)
         exact = brute_force_check(g, gd)["exact"]
-        (OUT / f"{name}_diploid.dot").write_text(diploid_graph_dot(gd))
+        dot = diploid_graph_dot(gd)
+        if name.startswith("09_"):
+            dot = SHORT_LABEL.sub(_short_label, dot)  # long nested branches -> first..last segment
+        (OUT / f"{name}_diploid.dot").write_text(dot)
         cart, _ = build_diploid(g, trivial_decomposition(g))
         row = [f"**{gd.num_vertices()}**", cart.num_vertices(), "yes" if exact else "NO"]
         rows.append(f"| {name} | {desc} | {g.num_vertices()} | {g.num_edges()} | {n} | {len(dec.nodes('P'))} | " + " | ".join(map(str, row)) + " |")

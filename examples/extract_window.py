@@ -9,6 +9,7 @@ one as a GFA file with the original segment IDs, sequences and haplotype walks.
 
     python examples/extract_window.py ~/brca1/BRCA1.gfa --out examples/data/brca1_window.gfa
     python examples/extract_window.py ~/brca1/BRCA1.gfa --list 10        # only list candidates
+    python examples/extract_window.py ~/brca1/MHC.gfa --list 10          # MHC: a few minutes
     python examples/extract_window.py ~/brca1/BRCA1.gfa --pick 3 --out examples/data/brca1_window.gfa
 
 The script only reads the input; it does not change any result of the paper.
@@ -26,28 +27,39 @@ from diploidgraph import SequenceGraph, decompose
 _W_STEP = re.compile(r"([<>])([^<>]+)")
 
 
-def read(path: str):
+def read_graph(path: str):
+    """Segments and links only; haplotype walks are streamed later (they can be long)."""
     seq: Dict[str, str] = {}
     edges: Set[Tuple[str, str]] = set()
-    walks = []  # (kind, fields, steps=[(segment, forward)])
-    dropped = 0
+    n_walks = dropped = 0
     with open(path) as fh:
         for line in fh:
-            f = line.rstrip("\n").split("\t")
-            if f[0] == "S":
+            tag = line[:2]
+            if tag == "S\t":
+                f = line.rstrip("\n").split("\t", 3)
                 seq[f[1]] = f[2]
-            elif f[0] == "L":
+            elif tag == "L\t":
+                f = line.split("\t", 6)
                 if f[2] == "+" and f[4] == "+":
                     edges.add((f[1], f[3]))
                 elif f[2] == "-" and f[4] == "-":
                     edges.add((f[3], f[1]))
                 else:
                     dropped += 1
-            elif f[0] == "W":
-                walks.append(("W", f, [(m.group(2), m.group(1) == ">") for m in _W_STEP.finditer(f[6])]))
-            elif f[0] == "P":
-                walks.append(("P", f, [(x[:-1], x[-1] == "+") for x in f[2].split(",") if x]))
-    return seq, edges, walks, dropped
+            elif tag in ("W\t", "P\t"):
+                n_walks += 1
+    return seq, edges, n_walks, dropped
+
+
+def iter_walks(path: str):
+    with open(path) as fh:
+        for line in fh:
+            if line.startswith("W\t"):
+                f = line.rstrip("\n").split("\t")
+                yield "W", f, [(m.group(2), m.group(1) == ">") for m in _W_STEP.finditer(f[6])]
+            elif line.startswith("P\t"):
+                f = line.rstrip("\n").split("\t")
+                yield "P", f, [(x[:-1], x[-1] == "+") for x in f[2].split(",") if x]
 
 
 def topo(vertices: List[str], succ: Dict[str, List[str]]) -> List[str]:
@@ -84,15 +96,14 @@ def window_vertices(a: str, b: str, succ, pred) -> Set[str]:
     return reach(a, succ, b) & reach(b, pred, a)
 
 
-def largest_deletion(vs: Set[str], order: List[str], succ, seq) -> int:
+def largest_deletion(vs: Set[str], pos: Dict[str, int], succ, seq) -> int:
     """Longest sequence (bp) skipped by one edge: max over edges (u, v) of the longest u-v path inside."""
-    pos = {v: i for i, v in enumerate(order)}
     sub = sorted(vs, key=pos.get)
     best = 0
     for u in sub:
         # longest bp strictly between u and each vertex reachable from u
         dist: Dict[str, int] = {u: 0}
-        for x in sub[sub.index(u):]:
+        for x in sub[sub.index(u):]:  # small window: quadratic is fine
             if x not in dist:
                 continue
             for w in succ[x]:
@@ -140,7 +151,7 @@ def main() -> None:
     ap.add_argument("--pick", type=int, default=1, help="which candidate to write (1 = best)")
     args = ap.parse_args()
 
-    seq, edges, walks, dropped = read(args.gfa)
+    seq, edges, n_walks, dropped = read_graph(args.gfa)
     g = SequenceGraph.from_edges(sorted(edges))
     vertices = g.vertices
     succ: Dict[str, List[str]] = {v: [] for v in vertices}
@@ -149,18 +160,25 @@ def main() -> None:
         succ[u].append(v)
         pred[v].append(u)
     order = topo(vertices, succ)
+    pos = {v: i for i, v in enumerate(order)}
     s, t = g.terminals()
 
-    # cut vertices: every s-t path passes through them
-    fwd: Dict[str, int] = {}
-    for v in order:
-        fwd[v] = 1 if v == s else sum(fwd[u] for u in pred[v])
-    bwd: Dict[str, int] = {}
-    for v in reversed(order):
-        bwd[v] = 1 if v == t else sum(bwd[w] for w in succ[v])
-    total = fwd[t]
-    cuts = [v for v in order if fwd[v] * bwd[v] == total]
-    print(f"{args.gfa}: {len(vertices)} vertices, {len(edges)} edges, {len(walks)} walks, "
+    # cut vertices: every s-t path passes through them, i.e. paths(s,v) * paths(v,t) = paths(s,t).
+    # Path counts are astronomically large on locus graphs (about 10^71057 for MHC), so they are
+    # compared modulo two large primes, as in validate.weighted_walk_count.
+    cuts = None
+    for prime in (2**61 - 1, 2**89 - 1):
+        fwd: Dict[str, int] = {}
+        for v in order:
+            fwd[v] = 1 if v == s else sum(fwd[u] for u in pred[v]) % prime
+        bwd: Dict[str, int] = {}
+        for v in reversed(order):
+            bwd[v] = 1 if v == t else sum(bwd[w] for w in succ[v]) % prime
+        total = fwd[t]
+        ok = {v for v in order if fwd[v] * bwd[v] % prime == total}
+        cuts = ok if cuts is None else cuts & ok
+    cuts = [v for v in order if v in cuts]
+    print(f"{args.gfa}: {len(vertices)} vertices, {len(edges)} edges, {n_walks} walks, "
           f"{dropped} dropped links, {len(cuts)} cut vertices")
 
     cands = []
@@ -177,7 +195,7 @@ def main() -> None:
                 continue
             dec = decompose(sub)
             core = sum(len(r.children) for r in dec.nodes("R"))
-            deletion = largest_deletion(vs, order, succ, seq)
+            deletion = largest_deletion(vs, pos, succ, seq)
             score = (core > 0, deletion >= args.min_deletion, len(dec.nodes("P")), -len(vs))
             cands.append((score, a, b, len(vs), sub.num_edges(), n_paths, len(dec.nodes("P")), core, deletion))
     if not cands:
@@ -194,17 +212,17 @@ def main() -> None:
     _, a, b, *_ = cands[args.pick - 1]
     vs = window_vertices(a, b, succ, pred)
     lines = ["H\tVN:Z:1.1"]
-    lines += [f"S\t{v}\t{seq[v]}" for v in sorted(vs, key=order.index)]
-    lines += [f"L\t{u}\t+\t{w}\t+\t0M" for u in sorted(vs, key=order.index) for w in sorted(succ[u], key=order.index) if w in vs]
-    n_walks = 0
-    for kind, f, steps in walks:
+    lines += [f"S\t{v}\t{seq[v]}" for v in sorted(vs, key=pos.get)]
+    lines += [f"L\t{u}\t+\t{w}\t+\t0M" for u in sorted(vs, key=pos.get) for w in sorted(succ[u], key=pos.get) if w in vs]
+    kept = 0
+    for kind, f, steps in iter_walks(args.gfa):
         line = slice_walk(kind, f, steps, a, b, seq)
         if line:
             lines.append(line)
-            n_walks += 1
+            kept += 1
     with open(args.out, "w") as fh:
         fh.write("\n".join(lines) + "\n")
-    print(f"\nwrote {args.out}: window {a} -> {b}, {len(vs)} segments, {n_walks} of {len(walks)} walks")
+    print(f"\nwrote {args.out}: window {a} -> {b}, {len(vs)} segments, {kept} of {n_walks} walks")
 
 
 if __name__ == "__main__":
