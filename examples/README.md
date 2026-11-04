@@ -9,15 +9,20 @@ of the diploid graph, verified by brute force).
 `python examples/run_examples.py --png` (run from the repository root) regenerates
 the figures and the table below in `examples/out/`.
 
-| Example | \|V\| | s-t paths N | P-nodes | \|V(G_D)\| | new vertices | naive N(N-1) | exact |
+| Example | \|V\| | s-t paths N | P-nodes | \|V(G_D)\| | new vertices | \|V\| of Cartesian product | exact |
 |---|---|---|---|---|---|---|---|
-| 1. One bubble (SNP) | 4 | 2 | 1 | 6 | 2 | 2 | yes |
-| 2. Three alleles | 5 | 3 | 1 | 11 | 6 | 6 | yes |
-| 3. Two bubbles in series | 7 | 4 | 2 | 11 | 4 | 12 | yes |
-| 4. Nested bubble (insertion carrying a SNP) | 6 | 3 | 2 | 10 | 4 | 6 | yes |
-| 5. Random nested series-parallel graph | 18 | 7 | 4 | 34 | 16 | 42 | yes |
-| 6. Bubble followed by a W-motif (non-series-parallel) | 7 | 6 | 1 | 23 | 16 | 30 | yes |
-| 7. Worked example of the paper (Figure 1) | 6 | 4 | 1 | 22 | 16 | 12 | yes |
+| 1. One bubble (SNP) | 4 | 2 | 1 | 6 | 2 | 14 | yes |
+| 2. Three alleles | 5 | 3 | 1 | 11 | 6 | 31 | yes |
+| 3. Two bubbles in series | 7 | 4 | 2 | 11 | 4 | 27 | yes |
+| 4. Nested bubble (insertion carrying a SNP) | 6 | 3 | 2 | 10 | 4 | 36 | yes |
+| 5. Random nested series-parallel graph | 18 | 7 | 4 | 34 | 16 | 262 | yes |
+| 6. Bubble followed by a W-motif (non-series-parallel) | 7 | 6 | 1 | 23 | 16 | 31 | yes |
+| 7. Worked example of the paper (Figure 1) | 6 | 4 | 1 | 22 | 16 | 46 | yes |
+
+**Cartesian product** is the Cartesian product with a fixed order of moves: the
+same pair-state construction applied to the whole input, without decomposition.
+It represents exactly the same haplotype pairs and is counted in the same unit
+(vertices), so it shows the saving due to the decomposition.
 
 **How to read the figures.** Blue ellipses `(v,v)` are the homozygous copy of the
 input: both haplotypes at `v`. Orange boxes `(x, y)` are heterozygous vertices of a
@@ -43,7 +48,7 @@ A bubble with three branches adds one vertex per ordered pair of distinct branch
 ## 3. Two bubbles in series
 
 The two haplotypes can differ at either bubble, at both, or at none. Each bubble is
-expanded once (4 new vertices), while naive pairing needs 12 pairs.
+expanded once (4 new vertices); the Cartesian product needs 27 vertices in all, against 11.
 
 <img src="out/03_two_bubbles_input.png" height="110"><br>
 <img src="out/03_two_bubbles_diploid.png" height="190">
@@ -81,7 +86,8 @@ The diploid graph has 22 vertices and 32 edges: the homozygous copy (6), the
 heterozygous vertices of the P-node between `u'` and `v'` (2), and the
 divergence vertices and pair states of the core (14, counting the 6
 single-haplotype moves as vertices, as in the table). Brute force confirms that
-each of the 16 ordered pairs of source-to-sink paths is decoded by exactly one walk.
+each of the N^2 = 16 ordered pairs of source-to-sink paths (identical pairs included)
+is decoded by exactly one walk.
 
 <img src="out/07_paper_figure1_input.png" height="130"><br>
 <img src="out/07_paper_figure1_diploid.png" width="100%">

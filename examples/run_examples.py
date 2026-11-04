@@ -11,7 +11,8 @@ import pathlib
 import shutil
 import subprocess
 
-from diploidgraph import SequenceGraph, build_diploid, decompose, naive_pair_count
+from diploidgraph import SequenceGraph, build_diploid, decompose
+from diploidgraph.decompose import trivial_decomposition
 from diploidgraph.export import diploid_graph_dot, sequence_graph_dot
 from diploidgraph.generators import random_sp_dag
 from diploidgraph.validate import brute_force_check
@@ -48,8 +49,9 @@ def main() -> None:
         raise SystemExit("Graphviz `dot` not found; install graphviz or drop --png")
     OUT.mkdir(exist_ok=True)
 
-    # Het vertices are ordered pairs, so the like-for-like naive count is N(N-1) (ordered).
-    rows = ["| Example | Description | \\|V\\| | \\|E\\| | s-t paths N | P-nodes | \\|V(G_D)\\| | new vertices | naive N(N-1) | exact |",
+    # Cartesian product with a fixed order of moves = the same construction without decomposition:
+    # same pairs, same unit (vertices), so it is the like-for-like comparison.
+    rows = ["| Example | Description | \\|V\\| | \\|E\\| | s-t paths N | P-nodes | \\|V(G_D)\\| | new vertices | \\|V\\| of Cartesian product | exact |",
             "|---|---|---|---|---|---|---|---|---|---|"]
     for name, desc, g in examples():
         s, t = g.terminals()
@@ -59,7 +61,8 @@ def main() -> None:
         gd, _ = build_diploid(g, dec)
         exact = brute_force_check(g, gd)["exact"]
         (OUT / f"{name}_diploid.dot").write_text(diploid_graph_dot(gd))
-        row = [gd.num_vertices(), gd.num_het_vertices(), naive_pair_count(n, ordered=True), "yes" if exact else "NO"]
+        cart, _ = build_diploid(g, trivial_decomposition(g))
+        row = [gd.num_vertices(), gd.num_het_vertices(), cart.num_vertices(), "yes" if exact else "NO"]
         rows.append(f"| {name} | {desc} | {g.num_vertices()} | {g.num_edges()} | {n} | {len(dec.nodes('P'))} | " + " | ".join(map(str, row)) + " |")
         if args.png:
             for f in OUT.glob(f"{name}_*.dot"):
