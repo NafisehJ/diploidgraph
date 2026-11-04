@@ -38,7 +38,7 @@ def examples():
          ("m", "c"), ("m", "d"), ("c", "d"), ("c", "t"), ("d", "t")])     # W-motif: diagonal c -> d
     yield "07_paper_figure1", "Worked example of the paper (Figure 1); non-series-parallel.", SequenceGraph.from_edges(
         [("u", "u'"), ("u", "v'"), ("u'", "c"), ("u'", "d"), ("c", "v'"), ("d", "v'"), ("u'", "v"), ("v'", "v")])
-    yield "08_gfa", "Read from a GFA file (examples/data/locus.gfa): a SNP and a 16 bp deletion.", read_gfa(str(DATA / "locus.gfa")).graph
+    yield "08_gfa", "Read from a GFA file (examples/data/locus.gfa): SNPs, three alleles, a nested insertion, a W-motif and a large deletion.", read_gfa(str(DATA / "locus.gfa")).graph
 
 
 def render(dot_path: pathlib.Path) -> None:

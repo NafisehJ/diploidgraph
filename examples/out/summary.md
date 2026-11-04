@@ -7,4 +7,4 @@
 | 05_random_sp | Random nested series-parallel graph (seed 7). | 18 | 23 | 7 | 4 | **34** | 262 | yes |
 | 06_w_motif | Smallest non-series-parallel graph (W-motif) in series with a bubble; core handled by pair states. | 7 | 9 | 6 | 1 | **23** | 31 | yes |
 | 07_paper_figure1 | Worked example of the paper (Figure 1); non-series-parallel. | 6 | 8 | 4 | 1 | **22** | 46 | yes |
-| 08_gfa | Read from a GFA file (examples/data/locus.gfa): a SNP and a 16 bp deletion. | 6 | 7 | 4 | 2 | **10** | 22 | yes |
+| 08_gfa | Read from a GFA file (examples/data/locus.gfa): SNPs, three alleles, a nested insertion, a W-motif and a large deletion. | 17 | 24 | 63 | 5 | **45** | 121 | yes |
