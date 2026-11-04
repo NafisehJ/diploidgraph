@@ -1,0 +1,18 @@
+digraph G {
+  rankdir=LR;
+  node [shape=circle, style=filled, fillcolor="#cfe3f7"];
+  "u";
+  "u'";
+  "v'";
+  "c";
+  "d";
+  "v";
+  "u'" -> "c";
+  "u'" -> "d";
+  "u'" -> "v";
+  "v'" -> "v";
+  "c" -> "v'";
+  "d" -> "v'";
+  "u" -> "u'";
+  "u" -> "v'";
+}

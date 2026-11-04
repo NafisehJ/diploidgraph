@@ -1,6 +1,7 @@
 # Worked examples
 
-Six small sequence graphs, from a single SNP to a non-series-parallel W-motif.
+Seven small sequence graphs, from a single SNP to a non-series-parallel W-motif,
+including the worked example of the paper.
 For each one: the input graph, its diploid graph, and an exactness check (every
 ordered pair of source-to-sink paths of the input is decoded by exactly one walk
 of the diploid graph, verified by brute force).
@@ -16,6 +17,7 @@ the figures and the table below in `examples/out/`.
 | 4. Nested bubble (insertion carrying a SNP) | 6 | 3 | 2 | 10 | 4 | 6 | yes |
 | 5. Random nested series-parallel graph | 18 | 7 | 4 | 34 | 16 | 42 | yes |
 | 6. Bubble followed by a W-motif (non-series-parallel) | 7 | 6 | 1 | 23 | 16 | 30 | yes |
+| 7. Worked example of the paper (Figure 1) | 6 | 4 | 1 | 22 | 16 | 12 | yes |
 
 **How to read the figures.** Blue ellipses `(v,v)` are the homozygous copy of the
 input: both haplotypes at `v`. Orange boxes `(x, y)` are heterozygous vertices of a
@@ -70,3 +72,16 @@ labelled arrows; in the table they are counted as vertices (16 new vertices in t
 
 <img src="out/06_w_motif_input.png" height="130"><br>
 <img src="out/06_w_motif_diploid.png" width="100%">
+
+## 7. Worked example of the paper (Figure 1)
+
+The input graph of Figure 1 of the paper: edges `u -> u'`, `u -> v'`, `u' -> c`,
+`u' -> d`, `c -> v'`, `d -> v'`, `u' -> v`, `v' -> v`. It is not series-parallel.
+The diploid graph has 22 vertices and 32 edges: the homozygous copy (6), the
+heterozygous vertices of the P-node between `u'` and `v'` (2), and the
+divergence vertices and pair states of the core (14, counting the 6
+single-haplotype moves as vertices, as in the table). Brute force confirms that
+each of the 16 ordered pairs of source-to-sink paths is decoded by exactly one walk.
+
+<img src="out/07_paper_figure1_input.png" height="130"><br>
+<img src="out/07_paper_figure1_diploid.png" width="100%">

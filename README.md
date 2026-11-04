@@ -202,9 +202,9 @@ check. Tests run on every push (see badge).
 
 ## Examples
 
-Six small worked examples (single bubble, three alleles, bubbles in series, a
-nested bubble, a random nested graph, and a W-motif), each with input and
-diploid graph figures and an exactness check: [examples/README.md](examples/README.md).
+Seven small worked examples (single bubble, three alleles, bubbles in series, a
+nested bubble, a random nested graph, a W-motif, and the worked example of the
+paper, Figure 1), each with input and diploid graph figures and an exactness check: [examples/README.md](examples/README.md).
 
 ## Experiments
 

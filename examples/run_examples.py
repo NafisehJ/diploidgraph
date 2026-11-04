@@ -32,6 +32,8 @@ def examples():
     yield "06_w_motif", "Smallest non-series-parallel graph (W-motif) in series with a bubble; core handled by pair states.", SequenceGraph.from_edges(
         [("s", "a"), ("s", "b"), ("a", "m"), ("b", "m"),                  # bubble
          ("m", "c"), ("m", "d"), ("c", "d"), ("c", "t"), ("d", "t")])     # W-motif: diagonal c -> d
+    yield "07_paper_figure1", "Worked example of the paper (Figure 1); non-series-parallel.", SequenceGraph.from_edges(
+        [("u", "u'"), ("u", "v'"), ("u'", "c"), ("u'", "d"), ("c", "v'"), ("d", "v'"), ("u'", "v"), ("v'", "v")])
 
 
 def render(dot_path: pathlib.Path) -> None:
