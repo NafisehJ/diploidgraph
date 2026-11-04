@@ -1,7 +1,7 @@
 # Worked examples
 
 Eight small sequence graphs, from a single SNP to a non-series-parallel W-motif,
-including the worked example of the paper and one graph read from a GFA file.
+including the worked example of the paper and a synthetic locus in GFA format.
 For each one: the input graph, its diploid graph, and an exactness check (every
 ordered pair of source-to-sink paths of the input is decoded by exactly one walk
 of the diploid graph, verified by brute force).
@@ -18,7 +18,7 @@ the figures and the table below in `examples/out/`.
 | 5. Random nested series-parallel graph | 18 | 7 | 4 | **34** | 262 | yes |
 | 6. Bubble followed by a W-motif (non-series-parallel) | 7 | 6 | 1 | **23** | 31 | yes |
 | 7. Worked example of the paper (Figure 1) | 6 | 4 | 1 | **22** | 46 | yes |
-| 8. A locus read from a GFA file (all of the above together) | 17 | 63 | 5 | **45** | 121 | yes |
+| 8. A synthetic locus in GFA format (all of the above together) | 17 | 63 | 5 | **45** | 121 | yes |
 
 **Cartesian product** is the Cartesian product with a fixed order of moves: the
 same pair-state construction applied to the whole input, without decomposition.
@@ -97,10 +97,10 @@ is decoded by exactly one walk.
 <img src="out/07_paper_figure1_input.png" height="130"><br>
 <img src="out/07_paper_figure1_diploid.png" width="100%">
 
-## 8. A locus read from a GFA file: all of the above together
+## 8. A synthetic locus in GFA format: all of the above together
 
-A small locus in GFA format, [data/locus.gfa](data/locus.gfa), the input format
-of pangenome graphs: 17 segments (`S`), 24 links (`L`) and 7 haplotype walks
+A small synthetic locus (made-up sequences and sample names) in GFA format,
+[data/locus.gfa](data/locus.gfa), the input format of pangenome graphs: 17 segments (`S`), 24 links (`L`) and 7 haplotype walks
 (`W`). It combines every case of the examples above:
 
 * a SNP: segments `2` / `3`;
@@ -114,8 +114,8 @@ of pangenome graphs: 17 segments (`S`), 24 links (`L`) and 7 haplotype walks
 The haplotype walks look like this (first two of seven):
 
 ```
-W	GRCh38	0	chr1	0	65	>1>2>4>5>8>9>10>12>13>14>16>17
-W	HG001	1	chr1	0	52	>1>3>4>6>8>13>15>16>17
+W	sample1	1	locus	0	65	>1>2>4>5>8>9>10>12>13>14>16>17
+W	sample2	1	locus	0	52	>1>3>4>6>8>13>15>16>17
 ```
 
 Build the diploid graph, check it and report its size from the command line:

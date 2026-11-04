@@ -204,7 +204,7 @@ check. Tests run on every push (see badge).
 
 Eight small worked examples (single bubble, three alleles, bubbles in series with
 a large deletion, a nested bubble, a random nested graph, a W-motif, the worked
-example of the paper (Figure 1), and a locus read from a GFA file that combines all of them),
+example of the paper (Figure 1), and a synthetic locus in GFA format that combines all of them),
 each with input and diploid graph figures and an exactness check: [examples/README.md](examples/README.md).
 
 ## Experiments
