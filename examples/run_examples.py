@@ -23,6 +23,15 @@ OUT = pathlib.Path(__file__).parent / "out"
 DATA = pathlib.Path(__file__).parent / "data"
 
 
+LETTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+
+def letters(real: SequenceGraph) -> SequenceGraph:
+    """Real segment IDs are long numbers; the figures write them as letters in the order of the GFA file."""
+    name = {v: LETTERS[i] for i, v in enumerate(real.vertices)}
+    return SequenceGraph.from_edges([(name[u], name[v]) for u, v in real.edges()])
+
+
 def examples():
     yield "01_bubble", "One bubble (a SNP): s -> {a, b} -> t.", SequenceGraph.from_edges(
         [("s", "a"), ("a", "t"), ("s", "b"), ("b", "t")])
@@ -40,11 +49,9 @@ def examples():
     yield "07_paper_figure1", "Worked example of the paper (Figure 1); non-series-parallel.", SequenceGraph.from_edges(
         [("u", "u'"), ("u", "v'"), ("u'", "c"), ("u'", "d"), ("c", "v'"), ("d", "v'"), ("u'", "v"), ("v'", "v")])
     yield "08_gfa", "Synthetic locus read from a GFA file (examples/data/locus.gfa): SNPs, three alleles, a nested insertion, a W-motif and a large deletion.", read_gfa(str(DATA / "locus.gfa")).graph
-    # Real segment IDs are 62857415..62857437; the figures show them as letters a..w, in order.
-    real = read_gfa(str(DATA / "brca1_window.gfa")).graph
-    letter = {v: chr(ord("a") + int(v) - 62857415) for v in real.vertices}
-    yield "09_brca1_window", "BRCA1 window (HPRC v2.0, real data), cut with extract_window.py: a CA repeat.", SequenceGraph.from_edges(
-        [(letter[u], letter[v]) for u, v in real.edges()])
+    for stem, desc in (("09_brca1_window", "BRCA1 window (HPRC v2.0, real data), cut with extract_window.py: a CA repeat."),
+                       ("10_mhc_window", "MHC window (HPRC v2.0, real data), cut with extract_window.py: a 164 bp deletion and a poly-A tract.")):
+        yield stem, desc, letters(read_gfa(str(DATA / f"{stem[3:]}.gfa")).graph)
 
 
 SHORT_LABEL = re.compile(r'label="\(([^"]+)\)"')
@@ -66,7 +73,7 @@ def _short_label(m: "re.Match") -> str:
         x = x.strip()
         if "(" not in x:
             return x
-        segs = re.findall(r"[a-z]", x)
+        segs = re.findall(r"[A-Za-z]", x)
         return f"{segs[0]}..{segs[-1]}"
 
     return f'label="({side(text[:cut])}, {side(text[cut + 1:])})"'
@@ -96,7 +103,7 @@ def main() -> None:
         gd, _ = build_diploid(g, dec)
         exact = brute_force_check(g, gd)["exact"]
         dot = diploid_graph_dot(gd)
-        if name.startswith("09_"):
+        if name in ("09_brca1_window", "10_mhc_window"):
             dot = SHORT_LABEL.sub(_short_label, dot)  # long nested branches -> first..last segment
         (OUT / f"{name}_diploid.dot").write_text(dot)
         cart, _ = build_diploid(g, trivial_decomposition(g))

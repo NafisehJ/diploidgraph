@@ -9,3 +9,4 @@
 | 07_paper_figure1 | Worked example of the paper (Figure 1); non-series-parallel. | 6 | 8 | 4 | 1 | **22** | 46 | yes |
 | 08_gfa | Synthetic locus read from a GFA file (examples/data/locus.gfa): SNPs, three alleles, a nested insertion, a W-motif and a large deletion. | 17 | 24 | 63 | 5 | **45** | 121 | yes |
 | 09_brca1_window | BRCA1 window (HPRC v2.0, real data), cut with extract_window.py: a CA repeat. | 23 | 40 | 168 | 15 | **85** | 623 | yes |
+| 10_mhc_window | MHC window (HPRC v2.0, real data), cut with extract_window.py: a 164 bp deletion and a poly-A tract. | 36 | 65 | 168 | 28 | **106** | 278 | yes |

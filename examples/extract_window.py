@@ -7,10 +7,9 @@ lists candidate windows, prefers ones that are not series-parallel (a W-motif
 or larger core), contain a large deletion and many bubbles, and writes the best
 one as a GFA file with the original segment IDs, sequences and haplotype walks.
 
-    python examples/extract_window.py ~/brca1/BRCA1.gfa --out examples/data/brca1_window.gfa
-    python examples/extract_window.py ~/brca1/BRCA1.gfa --list 10        # only list candidates
-    python examples/extract_window.py ~/brca1/MHC.gfa --list 10          # MHC: a few minutes
-    python examples/extract_window.py ~/brca1/BRCA1.gfa --pick 3 --out examples/data/brca1_window.gfa
+    python examples/extract_window.py BRCA1.gfa --list 10        # only list candidates
+    python examples/extract_window.py BRCA1.gfa --pick 1 --out examples/data/brca1_window.gfa
+    python examples/extract_window.py MHC.gfa --list 10          # MHC: a few minutes
 
 The script only reads the input; it does not change any result of the paper.
 """

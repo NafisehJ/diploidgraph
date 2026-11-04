@@ -23,9 +23,9 @@ On two HPRC v2.0 pangenome loci (BRCA1 and MHC):
 * **Exact:** every ordered pair of source-to-sink paths is represented by
   exactly one walk. The proof, including the construction for the
   non-series-parallel core (new since the bioRxiv 2025 version), is in the
-  manuscript under review (supplementary material). The code checks this by brute force on small
-  graphs and, on real loci, with a whole-graph count and on sampled haplotype
-  pairs (evidence, not a proof).
+  manuscript under review (supplementary material). The code checks this by
+  brute force on small graphs and, on real loci, with a whole-graph count and
+  on sampled haplotype pairs (evidence, not a proof).
 * **Fast:** 0.04 s for BRCA1 and under 10 s for MHC on a laptop.
 
 <img src="experiments/figures/real_loci.png" width="100%">
@@ -67,8 +67,8 @@ vertex orders; edges, time and memory in the GFA vertex order, single run.
 How to read the comparisons:
 
 * **Cartesian product with a fixed order of moves** is an ablation (no
-  decomposition): our own pair-state construction applied to the whole input instead of only to the non-series-parallel core. While the
-  two haplotypes are at the same vertex, both advance one edge (along the same
+  decomposition): our own pair-state construction applied to the whole input
+  instead of only to the non-series-parallel core. While the two haplotypes are at the same vertex, both advance one edge (along the same
   edge or along two different edges); otherwise only the one that is earlier in
   a fixed topological order advances. This is the part of a product of G with
   itself reachable from (s, s) with one fixed interleaving of moves. (The plain
@@ -205,9 +205,9 @@ check. Tests run on every push (see badge).
 Eight synthetic examples (single bubble, three alleles, bubbles in series with
 a large deletion, a nested bubble, a random nested graph, a W-motif, the worked
 example of the paper (Figure 1), and a synthetic locus in GFA format that
-combines all of them) and real pangenome data (a window of BRCA1 from HPRC
-v2.0, a CA repeat),
-each with input and diploid graph figures and an exactness check: [examples/README.md](examples/README.md).
+combines all of them) and real pangenome data (windows of BRCA1 and MHC from
+HPRC v2.0), each with input and diploid graph figures and an exactness check:
+[examples/README.md](examples/README.md).
 
 ## Experiments
 
@@ -229,7 +229,7 @@ See [experiments/README.md](experiments/README.md) for:
 ```
 src/diploidgraph/   package: seqgraph, gfa, decompose, diploid, validate, support, stats, external, export, cli
 tests/              pytest suite
-examples/           worked examples and figures
+examples/           worked examples, figures and small GFA files (examples/data/)
 experiments/        scripts and figures for the paper's measurements
 notebooks/          original prototype notebooks (superseded by the package)
 ```
