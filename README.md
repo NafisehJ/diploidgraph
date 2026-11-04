@@ -202,9 +202,10 @@ check. Tests run on every push (see badge).
 
 ## Examples
 
-Seven small worked examples (single bubble, three alleles, bubbles in series, a
-nested bubble, a random nested graph, a W-motif, and the worked example of the
-paper, Figure 1), each with input and diploid graph figures and an exactness check: [examples/README.md](examples/README.md).
+Eight small worked examples (single bubble, three alleles, bubbles in series with
+a large deletion, a nested bubble, a random nested graph, a W-motif, the worked
+example of the paper (Figure 1), and a small GFA file run from the command line),
+each with input and diploid graph figures and an exactness check: [examples/README.md](examples/README.md).
 
 ## Experiments
 

@@ -1,0 +1,30 @@
+digraph GD {
+  rankdir=LR;
+  node [style=filled];
+  edge [fontsize=10, fontcolor="#52514e"];
+  n0 [label="(1,1)", shape=ellipse, fillcolor="#cfe3f7"];
+  n1 [label="(2,2)", shape=ellipse, fillcolor="#cfe3f7"];
+  n2 [label="(3,3)", shape=ellipse, fillcolor="#cfe3f7"];
+  n3 [label="(4,4)", shape=ellipse, fillcolor="#cfe3f7"];
+  n4 [label="(5,5)", shape=ellipse, fillcolor="#cfe3f7"];
+  n5 [label="(6,6)", shape=ellipse, fillcolor="#cfe3f7"];
+  n6 [label="(3, 2)", shape=box, fillcolor="#f9c784"];
+  n7 [label="(2, 3)", shape=box, fillcolor="#f9c784"];
+  n8 [label="(-, 5)", shape=box, fillcolor="#f9c784"];
+  n9 [label="(5, -)", shape=box, fillcolor="#f9c784"];
+  n0 -> n6;
+  n0 -> n7;
+  n0 -> n1;
+  n0 -> n2;
+  n1 -> n3;
+  n2 -> n3;
+  n3 -> n8;
+  n3 -> n9;
+  n3 -> n4;
+  n3 -> n5;
+  n4 -> n5;
+  n6 -> n3;
+  n7 -> n3;
+  n8 -> n5;
+  n9 -> n5;
+}

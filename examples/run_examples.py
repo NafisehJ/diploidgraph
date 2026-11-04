@@ -15,9 +15,11 @@ from diploidgraph import SequenceGraph, build_diploid, decompose
 from diploidgraph.decompose import trivial_decomposition
 from diploidgraph.export import diploid_graph_dot, sequence_graph_dot
 from diploidgraph.generators import random_sp_dag
+from diploidgraph.gfa import read_gfa
 from diploidgraph.validate import brute_force_check
 
 OUT = pathlib.Path(__file__).parent / "out"
+DATA = pathlib.Path(__file__).parent / "data"
 
 
 def examples():
@@ -25,8 +27,9 @@ def examples():
         [("s", "a"), ("a", "t"), ("s", "b"), ("b", "t")])
     yield "02_three_alleles", "One bubble with three alleles.", SequenceGraph.from_edges(
         [("s", "a"), ("a", "t"), ("s", "b"), ("b", "t"), ("s", "c"), ("c", "t")])
-    yield "03_two_bubbles", "Two bubbles in series: pairs differ in either, both, or none.", SequenceGraph.from_edges(
-        [("s", "a"), ("s", "b"), ("a", "m"), ("b", "m"), ("m", "c"), ("m", "d"), ("c", "t"), ("d", "t")])
+    yield "03_two_bubbles", "Two bubbles in series, and a large deletion s -> t that skips both.", SequenceGraph.from_edges(
+        [("s", "a"), ("s", "b"), ("a", "m"), ("b", "m"), ("m", "c"), ("m", "d"), ("c", "t"), ("d", "t"),
+         ("s", "t")])                                                       # large deletion
     yield "04_nested", "A bubble nested inside one allele of an outer bubble (an insertion carrying a SNP).", SequenceGraph.from_edges(
         [("s", "a"), ("a", "b"), ("a", "c"), ("b", "d"), ("c", "d"), ("d", "t"), ("s", "t")])
     yield "05_random_sp", "Random nested series-parallel graph (seed 7).", random_sp_dag(n_ops=10, seed=7)
@@ -35,6 +38,7 @@ def examples():
          ("m", "c"), ("m", "d"), ("c", "d"), ("c", "t"), ("d", "t")])     # W-motif: diagonal c -> d
     yield "07_paper_figure1", "Worked example of the paper (Figure 1); non-series-parallel.", SequenceGraph.from_edges(
         [("u", "u'"), ("u", "v'"), ("u'", "c"), ("u'", "d"), ("c", "v'"), ("d", "v'"), ("u'", "v"), ("v'", "v")])
+    yield "08_gfa", "Read from a GFA file (examples/data/locus.gfa): a SNP and a 16 bp deletion.", read_gfa(str(DATA / "locus.gfa")).graph
 
 
 def render(dot_path: pathlib.Path) -> None:
@@ -51,8 +55,8 @@ def main() -> None:
 
     # Cartesian product with a fixed order of moves = the same construction without decomposition:
     # same pairs, same unit (vertices), so it is the like-for-like comparison.
-    rows = ["| Example | Description | \\|V\\| | \\|E\\| | s-t paths N | P-nodes | \\|V(G_D)\\| | new vertices | \\|V\\| of Cartesian product | exact |",
-            "|---|---|---|---|---|---|---|---|---|---|"]
+    rows = ["| Example | Description | \\|V\\| | \\|E\\| | s-t paths N | P-nodes | **\\|V(G_D)\\| (ours)** | \\|V\\| of Cartesian product | exact |",
+            "|---|---|---|---|---|---|---|---|---|"]
     for name, desc, g in examples():
         s, t = g.terminals()
         n = g.count_paths(s, t)
@@ -62,7 +66,7 @@ def main() -> None:
         exact = brute_force_check(g, gd)["exact"]
         (OUT / f"{name}_diploid.dot").write_text(diploid_graph_dot(gd))
         cart, _ = build_diploid(g, trivial_decomposition(g))
-        row = [gd.num_vertices(), gd.num_het_vertices(), cart.num_vertices(), "yes" if exact else "NO"]
+        row = [f"**{gd.num_vertices()}**", cart.num_vertices(), "yes" if exact else "NO"]
         rows.append(f"| {name} | {desc} | {g.num_vertices()} | {g.num_edges()} | {n} | {len(dec.nodes('P'))} | " + " | ".join(map(str, row)) + " |")
         if args.png:
             for f in OUT.glob(f"{name}_*.dot"):
